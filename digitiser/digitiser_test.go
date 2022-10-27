@@ -119,17 +119,77 @@ func TestDigitiser_NewID_Errors(t *testing.T) {
 	}
 }
 
-func TestDigitiser_NewID_Results(t *testing.T) {
+func testID(d *Digitiser, expected int) error {
+	str, err := d.NewString(expected)
+	if err != nil {
+		return fmt.Errorf("new string failed in testing: %v, id(%v)", err, expected)
+	}
+
+	result, err := d.NewID(str)
+	if err != nil {
+		return fmt.Errorf("new id failed in testing: %v, id(%v)", err, expected)
+	}
+
+	if expected != result {
+		return fmt.Errorf("expected id: %v, got: %v, string: '%s'", expected, result, str)
+	}
+	return nil
+}
+
+func testIDInRange(d *Digitiser, from, till int) error {
+	for i, j := from, till; i < j; i, j = i+1, j-1 {
+		err := testID(d, i)
+		if err != nil {
+			return err
+		}
+
+		err = testID(d, j)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func TestDigitiser_Results(t *testing.T) {
 	t.Parallel()
 
-	d, err := New(base64URL, 5)
+	digits, length := base64URL, 4
+
+	d, err := New(digits, length)
 	if err != nil {
 		t.Fatal("new digitiser failed in testing:", err)
 	}
 
-	//TODO: brute force base64URL
-	fmt.Println(d.NewID("123"))
+	if length < 3 {
+		err = testIDInRange(&d, 0, d.Max())
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 
+	// TODO начиная с length=3 d.Max()/100000 будет давать результат > 0
+	//fmt.Println("max:", d.Max(), "sotka counter:", d.Max()/100000)
+
+	for i := 0; i <= d.Max(); {
+
+		// TODO: WAITGROUP n Err as var
+		if (i + 100000) < d.Max() {
+
+			err = testIDInRange(&d, i, i+100000)
+			if err != nil {
+				t.Fatal(err)
+			}
+		} else {
+
+			err = testIDInRange(&d, i, d.Max())
+			if err != nil {
+				t.Fatal(err)
+			}
+
+		}
+		i += 100000
+	}
 }
 
 //func TestDigitiserCountMax(t *testing.T) {
