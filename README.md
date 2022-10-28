@@ -1,3 +1,11 @@
 # service-url-shortener
 
-test test
+
+### Local development:
+```sh
+# Run app
+$ make run
+
+# Or build docker container
+$ make compose-up
+```
