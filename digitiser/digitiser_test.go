@@ -7,14 +7,20 @@ import (
 	"testing"
 )
 
+const (
+	length = 5
+	digits = base64URL
+	base   = 64
+	max    = 1073741823
+)
+
 func TestDigitiser_New(t *testing.T) {
 	t.Parallel()
-	length, digits := 5, base64URL
 	expected := Digitiser{
-		base:   64,
+		base:   base,
 		digits: digits,
 		lookup: map[rune]int{},
-		maxInt: 1073741823,
+		maxInt: max,
 		strLen: length,
 	}
 
@@ -48,8 +54,6 @@ func TestDigitiser_New(t *testing.T) {
 func TestDigitiser_countMax(t *testing.T) {
 	t.Parallel()
 
-	length, digits, expected := 5, base64URL, 1073741823
-
 	d := Digitiser{digits: digits, base: len(digits)}
 	expectedErr := fmt.Errorf("digitise failed: rune not found: %v", digits[len(digits)-1])
 
@@ -68,8 +72,8 @@ func TestDigitiser_countMax(t *testing.T) {
 		t.Fatal("expected nil error, got:", err)
 	}
 
-	if d.Max() != expected {
-		t.Fatalf("expected max int: %v, got: %v", expected, d.Max())
+	if d.Max() != max {
+		t.Fatalf("expected max int: %v, got: %v", max, d.Max())
 	}
 }
 
@@ -101,7 +105,6 @@ func TestDigitiser_makeLookup(t *testing.T) {
 func TestDigitiser_NewID_Errors(t *testing.T) {
 	t.Parallel()
 
-	digits, length := base64URL, 5
 	d, err := New(digits, length)
 	if err != nil {
 		t.Fatal("new digitiser failed in testing:", err)
@@ -117,6 +120,78 @@ func TestDigitiser_NewID_Errors(t *testing.T) {
 	_, err = d.NewID("Hell&")
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
+	}
+}
+
+func TestDigitiser_LookupIndex(t *testing.T) {
+	t.Parallel()
+
+	d := Digitiser{
+		base:   base,
+		digits: digits,
+		lookup: nil,
+		maxInt: max,
+		strLen: length,
+	}
+
+	expectedErr := fmt.Errorf("index out of range: %v", 1)
+	_, err := d.lookupIndex(1)
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
+	}
+}
+
+func TestDigitiser_NewString(t *testing.T) {
+	t.Parallel()
+
+	d, err := New(digits, length)
+	if err != nil {
+		t.Fatal("new digitiser failed in testing:", err)
+	}
+
+	expectedErr := fmt.Errorf("digit exceeds the maximum:(%v)", d.Max())
+	_, err = d.NewString(d.Max() + 1)
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
+	}
+
+	d.lookup = nil
+	expectedErr = fmt.Errorf("lookup index failed: %v", fmt.Errorf("index out of range: %v", 0))
+	_, err = d.NewString(0)
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
+	}
+}
+
+func TestDigitiser_ResultsTillLength3(t *testing.T) {
+	t.Parallel()
+
+	for i := 0; i <= 3; i++ {
+		d, err := New(digits, i)
+		if err != nil {
+			t.Fatal("new digitiser failed in testing:", err)
+		}
+		testIDsInRange(t, &d, 0, d.Max())
+	}
+}
+
+func TestDigitiser_ResultsLength4(t *testing.T) {
+	t.Parallel()
+
+	hundredT := 100000
+	d, err := New(digits, 4)
+	if err != nil {
+		t.Fatal("new digitiser failed in testing:", err)
+	}
+
+	for i, j := 0, d.Max(); i < j; i, j = i+hundredT, j-hundredT {
+		testIDsInRange(t, &d, i, i+hundredT)
+		testIDsInRange(t, &d, j-hundredT, j)
+
+		if (j-hundredT)-(i+hundredT) < hundredT {
+			testIDsInRange(t, &d, i+hundredT, j-hundredT)
+			break
+		}
 	}
 }
 
@@ -137,14 +212,13 @@ func testID(d *Digitiser, expected int) error {
 	return nil
 }
 
-func testIDInRange(t *testing.T, d *Digitiser, from, till int) {
+func testIDsInRange(t *testing.T, d *Digitiser, from, till int) {
 	var (
 		err error
 		wg  sync.WaitGroup
 	)
 
 	for i, j := from, till; i < j; i, j = i+1, j-1 {
-
 		wg.Add(2)
 
 		go func(a int) {
@@ -162,62 +236,4 @@ func testIDInRange(t *testing.T, d *Digitiser, from, till int) {
 	if err != nil {
 		t.Fatal(err)
 	}
-}
-
-func TestDigitiser_Results(t *testing.T) {
-	t.Parallel()
-
-	digits, length := base64URL, 3
-	sotka := 100000
-
-	d, err := New(digits, length)
-	if err != nil {
-		t.Fatal("new digitiser failed in testing:", err)
-	}
-
-	if length < 3 {
-		testIDInRange(t, &d, 0, d.Max())
-		//if err != nil {
-		//	t.Fatal(err)
-		//}
-	}
-
-	//var testErr error
-	//wg := sync.WaitGroup{}
-	fmt.Println("max", d.Max())
-
-	for i, j := 0, d.Max(); i < j; {
-
-		fmt.Println(i, i+sotka, j-sotka, j)
-
-		if (j-sotka)-(i+sotka) < sotka {
-			fmt.Println(i+sotka, j-sotka)
-			break
-		}
-
-		//if (i + 100000) < d.Max() {
-		//	wg.Add(1)
-		//	go func() {
-		//		defer wg.Done()
-		//		fmt.Println(i, i+100000)
-		//		testIDInRange(t, &d, i, i+100000)
-		//	}()
-		//
-		//} else {
-		//	wg.Add(1)
-		//	go func() {
-		//		defer wg.Done()
-		//		fmt.Println(i, d.Max())
-		//
-		//		testIDInRange(t, &d, i, d.Max())
-		//	}()
-		//}
-		//wg.Wait()
-		//
-		i += 100000
-		j -= 100000
-	}
-	//if testErr != nil {
-	//	t.Fatal(testErr)
-	//}
 }

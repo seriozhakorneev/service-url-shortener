@@ -107,7 +107,7 @@ func (d *Digitiser) NewString(id int) (s string, err error) {
 
 	var n rune
 	for {
-		n, err = d.LookupIndex(id % d.Base())
+		n, err = d.lookupIndex(id % d.Base())
 		if err != nil {
 			err = fmt.Errorf("lookup index failed: %v", err)
 			return
@@ -118,7 +118,7 @@ func (d *Digitiser) NewString(id int) (s string, err error) {
 		id = id / d.Base()
 		if id <= d.Base()-1 {
 			if id != 0 {
-				n, err = d.LookupIndex(id % d.Base())
+				n, err = d.lookupIndex(id % d.Base())
 				if err != nil {
 					err = fmt.Errorf("lookup index failed: %v", err)
 					return
@@ -133,7 +133,7 @@ func (d *Digitiser) NewString(id int) (s string, err error) {
 	return
 }
 
-func (d *Digitiser) LookupIndex(i int) (rune, error) {
+func (d *Digitiser) lookupIndex(i int) (rune, error) {
 	for k, v := range d.lookup {
 		if i == v {
 			return k, nil
