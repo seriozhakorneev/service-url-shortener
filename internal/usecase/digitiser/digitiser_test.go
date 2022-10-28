@@ -2,20 +2,46 @@ package digitiser
 
 import (
 	"fmt"
+	"log"
+	"math"
+	"os"
 	"reflect"
-	"sync"
 	"testing"
 )
 
 const (
+	// changing this parameters will affect tests performance
 	length = 5
 	digits = base64URL
-	base   = 64
-	max    = 1073741823
 )
+
+var (
+	base, max int
+)
+
+func TestMain(m *testing.M) {
+	d := Digitiser{digits: digits, strLen: length, base: len(digits)}
+
+	err := d.makeLookup()
+	if err != nil {
+		log.Fatalf("Failed to make lookup in test: %s", err)
+	}
+
+	err = d.countMax(length)
+	if err != nil {
+		log.Fatalf("Failed to count max in test: %s", err)
+
+	}
+
+	base, max = d.Base(), d.Max()
+
+	code := m.Run()
+	os.Exit(code)
+}
 
 func TestDigitiser_New(t *testing.T) {
 	t.Parallel()
+
 	expected := Digitiser{
 		base:   base,
 		digits: digits,
@@ -111,7 +137,7 @@ func TestDigitiser_NewID_Errors(t *testing.T) {
 	}
 
 	expectedErr := fmt.Errorf("string exceeds the maximum allowed value(%v)", d.maxInt)
-	_, err = d.NewID("Helloo")
+	_, err = d.NewID("Heelloo8")
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
@@ -163,34 +189,33 @@ func TestDigitiser_NewString(t *testing.T) {
 	}
 }
 
-func TestDigitiser_ResultsTillLength3(t *testing.T) {
+func TestDigitiser_Results(t *testing.T) {
 	t.Parallel()
 
-	for i := 0; i <= 3; i++ {
-		d, err := New(digits, i)
+	var (
+		notMax int
+		err    error
+		d      Digitiser
+	)
+
+	for i := 1; i <= length; i++ {
+		d, err = New(digits, i)
 		if err != nil {
 			t.Fatal("new digitiser failed in testing:", err)
 		}
-		testIDsInRange(t, &d, 0, d.Max())
-	}
-}
 
-func TestDigitiser_ResultsLength4(t *testing.T) {
-	t.Parallel()
+		// shorten max value to speed up test
+		notMax = d.Max() / int(math.Pow(float64(i), float64(i)))
 
-	hundredT := 100000
-	d, err := New(digits, 4)
-	if err != nil {
-		t.Fatal("new digitiser failed in testing:", err)
-	}
-
-	for i, j := 0, d.Max(); i < j; i, j = i+hundredT, j-hundredT {
-		testIDsInRange(t, &d, i, i+hundredT)
-		testIDsInRange(t, &d, j-hundredT, j)
-
-		if (j-hundredT)-(i+hundredT) < hundredT {
-			testIDsInRange(t, &d, i+hundredT, j-hundredT)
-			break
+		for from, till := 0, notMax; from < till; from, till = from+1, till-1 {
+			err = testID(&d, from)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = testID(&d, till)
+			if err != nil {
+				t.Fatal(err)
+			}
 		}
 	}
 }
@@ -210,30 +235,4 @@ func testID(d *Digitiser, expected int) error {
 		return fmt.Errorf("expected id: %v, got: %v, string: '%s'", expected, result, str)
 	}
 	return nil
-}
-
-func testIDsInRange(t *testing.T, d *Digitiser, from, till int) {
-	var (
-		err error
-		wg  sync.WaitGroup
-	)
-
-	for i, j := from, till; i < j; i, j = i+1, j-1 {
-		wg.Add(2)
-
-		go func(a int) {
-			defer wg.Done()
-			err = testID(d, a)
-		}(i)
-
-		go func(a int) {
-			defer wg.Done()
-			err = testID(d, a)
-		}(j)
-	}
-
-	wg.Wait()
-	if err != nil {
-		t.Fatal(err)
-	}
 }

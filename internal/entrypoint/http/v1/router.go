@@ -33,8 +33,7 @@ func NewRouter(handler *gin.Engine, l logger.Interface, t usecase.Echo) {
 	handler.GET("/healthz", func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	// Routers
-	h := handler.Group("/v1")
-	{
-		newEchoRoutes(h, t, l)
-	}
+	//h := handler.Group("/v1")
+	//{
+	//}
 }
