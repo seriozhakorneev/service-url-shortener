@@ -3,6 +3,7 @@ package digitiser
 import (
 	"fmt"
 	"reflect"
+	"sync"
 	"testing"
 )
 
@@ -136,25 +137,38 @@ func testID(d *Digitiser, expected int) error {
 	return nil
 }
 
-func testIDInRange(d *Digitiser, from, till int) error {
-	for i, j := from, till; i < j; i, j = i+1, j-1 {
-		err := testID(d, i)
-		if err != nil {
-			return err
-		}
+func testIDInRange(t *testing.T, d *Digitiser, from, till int) {
+	var (
+		err error
+		wg  sync.WaitGroup
+	)
 
-		err = testID(d, j)
-		if err != nil {
-			return err
-		}
+	for i, j := from, till; i < j; i, j = i+1, j-1 {
+
+		wg.Add(2)
+
+		go func(a int) {
+			defer wg.Done()
+			err = testID(d, a)
+		}(i)
+
+		go func(a int) {
+			defer wg.Done()
+			err = testID(d, a)
+		}(j)
 	}
-	return nil
+
+	wg.Wait()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestDigitiser_Results(t *testing.T) {
 	t.Parallel()
 
-	digits, length := base64URL, 4
+	digits, length := base64URL, 3
+	sotka := 100000
 
 	d, err := New(digits, length)
 	if err != nil {
@@ -162,86 +176,48 @@ func TestDigitiser_Results(t *testing.T) {
 	}
 
 	if length < 3 {
-		err = testIDInRange(&d, 0, d.Max())
-		if err != nil {
-			t.Fatal(err)
-		}
+		testIDInRange(t, &d, 0, d.Max())
+		//if err != nil {
+		//	t.Fatal(err)
+		//}
 	}
 
-	// TODO начиная с length=3 d.Max()/100000 будет давать результат > 0
-	//fmt.Println("max:", d.Max(), "sotka counter:", d.Max()/100000)
+	//var testErr error
+	//wg := sync.WaitGroup{}
+	fmt.Println("max", d.Max())
 
-	for i := 0; i <= d.Max(); {
+	for i, j := 0, d.Max(); i < j; {
 
-		// TODO: WAITGROUP n Err as var
-		if (i + 100000) < d.Max() {
+		fmt.Println(i, i+sotka, j-sotka, j)
 
-			err = testIDInRange(&d, i, i+100000)
-			if err != nil {
-				t.Fatal(err)
-			}
-		} else {
-
-			err = testIDInRange(&d, i, d.Max())
-			if err != nil {
-				t.Fatal(err)
-			}
-
+		if (j-sotka)-(i+sotka) < sotka {
+			fmt.Println(i+sotka, j-sotka)
+			break
 		}
+
+		//if (i + 100000) < d.Max() {
+		//	wg.Add(1)
+		//	go func() {
+		//		defer wg.Done()
+		//		fmt.Println(i, i+100000)
+		//		testIDInRange(t, &d, i, i+100000)
+		//	}()
+		//
+		//} else {
+		//	wg.Add(1)
+		//	go func() {
+		//		defer wg.Done()
+		//		fmt.Println(i, d.Max())
+		//
+		//		testIDInRange(t, &d, i, d.Max())
+		//	}()
+		//}
+		//wg.Wait()
+		//
 		i += 100000
+		j -= 100000
 	}
+	//if testErr != nil {
+	//	t.Fatal(testErr)
+	//}
 }
-
-//func TestDigitiserCountMax(t *testing.T) {
-//	t.Parallel()
-//
-//	d := Digitiser{}
-//	err := d.countMax()
-//	if err != nil {
-//		return
-//	}
-//}
-
-//func TestNewID(t *testing.T) {
-//	err := Init(base64URL, 5)
-//	if err != nil {
-//		t.Fatalf("Failed to init Digit")
-//	}
-//	var result int
-//	testStr := "s"
-//	expectedIndex := strings.Index(base64URL, testStr)
-//	expectedUniqueIds := []string{"0", "c", "Z", "01", "b1"}
-//	testCounters := []int{0, 12, 61, 62, 73}
-//
-//	for i, v := range []rune(testStr) {
-//		index, _ := Digits.LookupRune(v)
-//		if index != expectedIndex {
-//			t.Fatalf("Expected index: %v. Got: %v", expectedIndex, index)
-//		}
-//		result += index * int(math.Pow(62, float64(i)))
-//	}
-//
-//	for i, v := range expectedUniqueIds {
-//		id, _ := Digits.NewID(v)
-//		if id != testCounters[i] {
-//			t.Fatalf("Expected ID: %v. Got: %v", testCounters[i], id)
-//		}
-//	}
-//}
-//
-//func Test_NewString(t *testing.T) {
-//	err := Init(base64URL, 5)
-//	if err != nil {
-//		t.Fatalf("Failed to init Digit")
-//	}
-//
-//	testCounters := []int{0, 12, 61, 62, 73}
-//	expectedUniqueIds := []string{"0", "c", "Z", "01", "b1"}
-//
-//	for i, v := range testCounters {
-//		x, _ := Digits.NewString(v)
-//		if x != expectedUniqueIds[i] {
-//			t.Fatalf("Expected id: %v. Got: %v", expectedUniqueIds[i], x)
-//		}
-//	}
-//}
