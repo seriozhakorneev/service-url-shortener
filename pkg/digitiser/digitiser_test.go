@@ -12,7 +12,7 @@ import (
 const (
 	// changing this parameters will affect tests performance
 	length = 5
-	digits = base64URL
+	digits = Base64URL
 )
 
 var (

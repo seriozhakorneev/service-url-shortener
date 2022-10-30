@@ -13,5 +13,6 @@ type (
 	Digitiser interface {
 		Digit(string) (int, error)
 		String(int) (string, error)
+		Max() int
 	}
 )

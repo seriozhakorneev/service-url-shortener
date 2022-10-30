@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,6 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"service-url-shortener/config"
+	v1 "service-url-shortener/internal/entrypoint/http/v1"
+	"service-url-shortener/internal/usecase"
+	"service-url-shortener/pkg/digitiser"
 	"service-url-shortener/pkg/httpserver"
 	"service-url-shortener/pkg/logger"
 )
@@ -17,21 +21,26 @@ import (
 func Run(cfg *config.Config) {
 	l := logger.New(cfg.Log.Level)
 
+	// TODO: CONFIG
+	dig, err := digitiser.New(digitiser.Base64URL, 3)
+	if err != nil {
+		l.Fatal(fmt.Errorf("app - Run - dig.New: %w", err))
+	}
+
 	// Use Case
-	//echoUseCase := usecase.New(rewriter.New(cfg.Rewriter))
+	shortenerUseCase := usecase.New(&dig)
 
 	// HTTP Server
 	handler := gin.New()
-	//v1.NewRouter(handler, l, echoUseCase)
+	v1.NewRouter(handler, l, shortenerUseCase)
 
-	//log.Printf("swagger docs on  http://localhost:%v/swagger/index.html", cfg.HTTP.Port)
+	log.Printf("swagger docs on  http://localhost:%v/swagger/index.html", cfg.HTTP.Port)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
-	var err error
 	select {
 	case s := <-interrupt:
 		l.Info("app - Run - signal: " + s.String())

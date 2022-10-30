@@ -20,26 +20,23 @@ func New(d Digitiser) *ShortenerUseCase {
 // Shorten - shortens the URI, makes URI entry in the database
 func (uc *ShortenerUseCase) Shorten(ctx context.Context, URI string) (string, error) {
 
-	// TODO check in db for existed one
+	//TODO check in db for existed one, if there is no
+	//TODO check the count of links in db
+	count := len(URI)
+	//TODO if count < uc.digitiser.Max() - create new
+	//TODO else  - rewrite oldest(time)
 
-	id, err := uc.digitiser.Digit(URI)
-	if err != nil {
-		return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.digitiser.Digit: %w", err)
-	}
-
-	// TODO: set id, url to db
-	// if no error, returns short_link
-
-	shortURL, err := uc.digitiser.String(id)
+	short, err := uc.digitiser.String(count)
 	if err != nil {
 		return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.digitiser.String: %w", err)
 	}
 
-	return shortURL, nil
+	return short, nil
 }
 
 // Lengthen - returns the URI associated with the given short identifier
 func (uc *ShortenerUseCase) Lengthen(ctx context.Context, short string) (string, error) {
+	// TODO : get short string from url
 
 	_, err := uc.digitiser.Digit(short)
 	if err != nil {

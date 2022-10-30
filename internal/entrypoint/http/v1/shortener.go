@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -24,20 +26,9 @@ func newShortenerRoutes(handler *gin.RouterGroup, t usecase.Shortener, l logger.
 	}
 }
 
-//TODO docs
-
-// @Summary     Show history
-// @Description Show all translation history
-// @ID          history
-// @Tags  	    translation
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} historyResponse
-// @Failure     500 {object} response
-// @Router      /translation/history [get]
+// TODO docs
 func (r *shortenerRoutes) create(c *gin.Context) {
-
-	var request long
+	var request shortenerData
 	if err := c.ShouldBindJSON(&request); err != nil {
 		r.l.Error(err, "http - v1 - create")
 		errorResponse(c, http.StatusBadRequest, "invalid request body")
@@ -53,24 +44,12 @@ func (r *shortenerRoutes) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, short{shortURL})
+	c.JSON(http.StatusOK, shortenerData{shortURL})
 }
 
-//TODO docs
-
-// @Summary     Translate
-// @Description Translate a text
-// @ID          do-translate
-// @Tags  	    translation
-// @Accept      json
-// @Produce     json
-// @Param       request body doTranslateRequest true "Set up translation"
-// @Success     200 {object} entity.Translation
-// @Failure     400 {object} response
-// @Failure     500 {object} response
-// @Router      /translation/do-translate [post]
+// TODO docs
 func (r *shortenerRoutes) get(c *gin.Context) {
-	var request short
+	var request shortenerData
 	if err := c.ShouldBindJSON(&request); err != nil {
 		r.l.Error(err, "http - v1 - get")
 		errorResponse(c, http.StatusBadRequest, "invalid request body")
@@ -78,7 +57,7 @@ func (r *shortenerRoutes) get(c *gin.Context) {
 		return
 	}
 
-	URI, err := r.t.Lengthen(c.Request.Context(), request.ShortURI)
+	URI, err := r.t.Lengthen(c.Request.Context(), request.URI)
 	if err != nil {
 		r.l.Error(err, "http - v1 - get")
 		errorResponse(c, http.StatusInternalServerError, "shortener service problems")
@@ -86,13 +65,32 @@ func (r *shortenerRoutes) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, long{URI})
+	c.JSON(http.StatusOK, shortenerData{URI})
 }
 
-type long struct {
+type shortenerData struct {
 	URI string `json:"URI"`
 }
 
-type short struct {
-	ShortURI string `json:"short_URI"`
+// UnmarshalJSON переопределенный json.unmarshal для shortenerData
+func (d *shortenerData) UnmarshalJSON(bytes []byte) error {
+	if string(bytes) == "null" {
+		return nil
+	}
+
+	tmp := struct {
+		URI string `json:"URI"`
+	}{}
+
+	err := json.Unmarshal(bytes, &tmp)
+	if err != nil {
+		return err
+	}
+
+	if tmp.URI == "" {
+		return fmt.Errorf("required field 'URI' is empty")
+	}
+
+	*d = shortenerData{URI: tmp.URI}
+	return nil
 }
