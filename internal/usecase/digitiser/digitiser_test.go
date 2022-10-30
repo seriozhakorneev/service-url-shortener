@@ -137,13 +137,13 @@ func TestDigitiser_NewID_Errors(t *testing.T) {
 	}
 
 	expectedErr := fmt.Errorf("string exceeds the maximum allowed value(%v)", d.maxInt)
-	_, err = d.NewID("Heelloo8")
+	_, err = d.ID("Heelloo8")
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
 
 	expectedErr = fmt.Errorf("digitise failed: rune not found: %v", '&')
-	_, err = d.NewID("Hell&")
+	_, err = d.ID("Hell&")
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
@@ -176,14 +176,14 @@ func TestDigitiser_NewString(t *testing.T) {
 	}
 
 	expectedErr := fmt.Errorf("digit exceeds the maximum:(%v)", d.Max())
-	_, err = d.NewString(d.Max() + 1)
+	_, err = d.Str(d.Max() + 1)
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
 
 	d.lookup = nil
 	expectedErr = fmt.Errorf("lookup index failed: %v", fmt.Errorf("index out of range: %v", 0))
-	_, err = d.NewString(0)
+	_, err = d.Str(0)
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
@@ -221,12 +221,12 @@ func TestDigitiser_Results(t *testing.T) {
 }
 
 func testID(d *Digitiser, expected int) error {
-	str, err := d.NewString(expected)
+	str, err := d.Str(expected)
 	if err != nil {
 		return fmt.Errorf("new string failed in testing: %v, id(%v)", err, expected)
 	}
 
-	result, err := d.NewID(str)
+	result, err := d.ID(str)
 	if err != nil {
 		return fmt.Errorf("new id failed in testing: %v, id(%v)", err, expected)
 	}

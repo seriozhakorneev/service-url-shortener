@@ -71,7 +71,7 @@ func (d *Digitiser) Length() int {
 	return d.strLen
 }
 
-func (d *Digitiser) NewID(s string) (id int, err error) {
+func (d *Digitiser) ID(s string) (id int, err error) {
 	if len(s) > d.Length() {
 		err = fmt.Errorf("string exceeds the maximum allowed value(%v)", d.maxInt)
 		return
@@ -86,20 +86,20 @@ func (d *Digitiser) NewID(s string) (id int, err error) {
 	return
 }
 
-func (d *Digitiser) digitise(s string) (dig int, err error) {
+func (d *Digitiser) digitise(s string) (digit int, err error) {
 	for i, v := range s {
 		m, ok := d.lookup[v]
 		if !ok {
 			err = fmt.Errorf("rune not found: %v", v)
 			return
 		}
-		dig += m * int(math.Pow(float64(d.Base()), float64(i)))
+		digit += m * int(math.Pow(float64(d.Base()), float64(i)))
 	}
 
 	return
 }
 
-func (d *Digitiser) NewString(id int) (s string, err error) {
+func (d *Digitiser) Str(id int) (s string, err error) {
 	if id > d.Max() {
 		err = fmt.Errorf("digit exceeds the maximum:(%v)", d.maxInt)
 		return
