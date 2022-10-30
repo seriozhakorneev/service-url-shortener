@@ -1,14 +1,17 @@
-// Package usecase implements application business logic. Each logic group in own file.
 package usecase
 
+import "context"
+
 type (
-	// Echo -.
-	Echo interface {
-		Rewrite(m map[string]any)
+	// Shortener -.
+	Shortener interface {
+		Shorten(context.Context, string) (string, error)
+		Lengthen(context.Context, string) (string, error)
 	}
 
-	// Rewriter -.
-	Rewriter interface {
-		Rewrite(m map[string]any)
+	// Digitiser -.
+	Digitiser interface {
+		Digit(string) (int, error)
+		String(int) (string, error)
 	}
 )

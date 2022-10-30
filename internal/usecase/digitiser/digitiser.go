@@ -8,17 +8,17 @@ import (
 const base64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 
 type Digitiser struct {
-	base           int
 	digits         string
+	digBase        int
 	lookup         map[rune]int
 	maxInt, strLen int
 }
 
 func New(digits string, length int) (d Digitiser, err error) {
 	d = Digitiser{
-		base:   len(digits),
-		digits: digits,
-		strLen: length,
+		digBase: len(digits),
+		digits:  digits,
+		strLen:  length,
 	}
 
 	if err = d.makeLookup(); err != nil {
@@ -59,20 +59,20 @@ func (d *Digitiser) makeLookup() (err error) {
 	return
 }
 
-func (d *Digitiser) Base() int {
-	return d.base
+func (d *Digitiser) base() int {
+	return d.digBase
 }
 
 func (d *Digitiser) Max() int {
 	return d.maxInt
 }
 
-func (d *Digitiser) Length() int {
+func (d *Digitiser) length() int {
 	return d.strLen
 }
 
-func (d *Digitiser) ID(s string) (id int, err error) {
-	if len(s) > d.Length() {
+func (d *Digitiser) Digit(s string) (id int, err error) {
+	if len(s) > d.length() {
 		err = fmt.Errorf("string exceeds the maximum allowed value(%v)", d.maxInt)
 		return
 	}
@@ -93,13 +93,13 @@ func (d *Digitiser) digitise(s string) (digit int, err error) {
 			err = fmt.Errorf("rune not found: %v", v)
 			return
 		}
-		digit += m * int(math.Pow(float64(d.Base()), float64(i)))
+		digit += m * int(math.Pow(float64(d.base()), float64(i)))
 	}
 
 	return
 }
 
-func (d *Digitiser) Str(id int) (s string, err error) {
+func (d *Digitiser) String(id int) (s string, err error) {
 	if id > d.Max() {
 		err = fmt.Errorf("digit exceeds the maximum:(%v)", d.maxInt)
 		return
@@ -107,7 +107,7 @@ func (d *Digitiser) Str(id int) (s string, err error) {
 
 	var n rune
 	for {
-		n, err = d.lookupIndex(id % d.Base())
+		n, err = d.lookupIndex(id % d.base())
 		if err != nil {
 			err = fmt.Errorf("lookup index failed: %v", err)
 			return
@@ -115,10 +115,10 @@ func (d *Digitiser) Str(id int) (s string, err error) {
 
 		s += string(n)
 
-		id = id / d.Base()
-		if id <= d.Base()-1 {
+		id = id / d.base()
+		if id <= d.base()-1 {
 			if id != 0 {
-				n, err = d.lookupIndex(id % d.Base())
+				n, err = d.lookupIndex(id % d.base())
 				if err != nil {
 					err = fmt.Errorf("lookup index failed: %v", err)
 					return

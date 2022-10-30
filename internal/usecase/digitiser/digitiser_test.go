@@ -20,7 +20,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	d := Digitiser{digits: digits, strLen: length, base: len(digits)}
+	d := Digitiser{digits: digits, strLen: length, digBase: len(digits)}
 
 	err := d.makeLookup()
 	if err != nil {
@@ -29,11 +29,11 @@ func TestMain(m *testing.M) {
 
 	err = d.countMax(length)
 	if err != nil {
-		log.Fatalf("Failed to count max in test: %s", err)
+		log.Fatalf("Failed to count Max in test: %s", err)
 
 	}
 
-	base, max = d.Base(), d.Max()
+	base, max = d.base(), d.Max()
 
 	code := m.Run()
 	os.Exit(code)
@@ -43,11 +43,11 @@ func TestDigitiser_New(t *testing.T) {
 	t.Parallel()
 
 	expected := Digitiser{
-		base:   base,
-		digits: digits,
-		lookup: map[rune]int{},
-		maxInt: max,
-		strLen: length,
+		digBase: base,
+		digits:  digits,
+		lookup:  map[rune]int{},
+		maxInt:  max,
+		strLen:  length,
 	}
 
 	err := expected.makeLookup()
@@ -66,7 +66,7 @@ func TestDigitiser_New(t *testing.T) {
 
 	duplicateDigits := "AA"
 	expectedErr := fmt.Errorf("make lookup failed: duplicate rune: %d", duplicateDigits[0])
-	expectedRes := Digitiser{base: 2, digits: duplicateDigits}
+	expectedRes := Digitiser{digBase: 2, digits: duplicateDigits}
 	result, err = New(duplicateDigits, 0)
 
 	if !reflect.DeepEqual(expectedErr, err) {
@@ -80,7 +80,7 @@ func TestDigitiser_New(t *testing.T) {
 func TestDigitiser_countMax(t *testing.T) {
 	t.Parallel()
 
-	d := Digitiser{digits: digits, base: len(digits)}
+	d := Digitiser{digits: digits, digBase: len(digits)}
 	expectedErr := fmt.Errorf("digitise failed: rune not found: %v", digits[len(digits)-1])
 
 	err := d.countMax(length)
@@ -99,7 +99,7 @@ func TestDigitiser_countMax(t *testing.T) {
 	}
 
 	if d.Max() != max {
-		t.Fatalf("expected max int: %v, got: %v", max, d.Max())
+		t.Fatalf("expected Max int: %v, got: %v", max, d.Max())
 	}
 }
 
@@ -137,13 +137,13 @@ func TestDigitiser_NewID_Errors(t *testing.T) {
 	}
 
 	expectedErr := fmt.Errorf("string exceeds the maximum allowed value(%v)", d.maxInt)
-	_, err = d.ID("Heelloo8")
+	_, err = d.Digit("Heelloo8")
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
 
 	expectedErr = fmt.Errorf("digitise failed: rune not found: %v", '&')
-	_, err = d.ID("Hell&")
+	_, err = d.Digit("Hell&")
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
@@ -153,11 +153,11 @@ func TestDigitiser_LookupIndex(t *testing.T) {
 	t.Parallel()
 
 	d := Digitiser{
-		base:   base,
-		digits: digits,
-		lookup: nil,
-		maxInt: max,
-		strLen: length,
+		digBase: base,
+		digits:  digits,
+		lookup:  nil,
+		maxInt:  max,
+		strLen:  length,
 	}
 
 	expectedErr := fmt.Errorf("index out of range: %v", 1)
@@ -176,14 +176,14 @@ func TestDigitiser_NewString(t *testing.T) {
 	}
 
 	expectedErr := fmt.Errorf("digit exceeds the maximum:(%v)", d.Max())
-	_, err = d.Str(d.Max() + 1)
+	_, err = d.String(d.Max() + 1)
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
 
 	d.lookup = nil
 	expectedErr = fmt.Errorf("lookup index failed: %v", fmt.Errorf("index out of range: %v", 0))
-	_, err = d.Str(0)
+	_, err = d.String(0)
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
@@ -204,7 +204,7 @@ func TestDigitiser_Results(t *testing.T) {
 			t.Fatal("new digitiser failed in testing:", err)
 		}
 
-		// shorten max value to speed up test
+		// shorten Max value to speed up test
 		notMax = d.Max() / int(math.Pow(float64(i), float64(i)))
 
 		for from, till := 0, notMax; from < till; from, till = from+1, till-1 {
@@ -221,12 +221,12 @@ func TestDigitiser_Results(t *testing.T) {
 }
 
 func testID(d *Digitiser, expected int) error {
-	str, err := d.Str(expected)
+	str, err := d.String(expected)
 	if err != nil {
 		return fmt.Errorf("new string failed in testing: %v, id(%v)", err, expected)
 	}
 
-	result, err := d.ID(str)
+	result, err := d.Digit(str)
 	if err != nil {
 		return fmt.Errorf("new id failed in testing: %v, id(%v)", err, expected)
 	}
