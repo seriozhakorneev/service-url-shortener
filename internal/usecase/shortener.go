@@ -1,0 +1,48 @@
+package usecase
+
+import (
+	"context"
+	"fmt"
+)
+
+// ShortenerUseCase -.
+type ShortenerUseCase struct {
+	digitiser Digitiser
+	// string getter from short url
+	// repo
+}
+
+// New -.
+func New(d Digitiser) *ShortenerUseCase {
+	return &ShortenerUseCase{digitiser: d}
+}
+
+// Shorten - shortens the URI, makes URI entry in the database
+func (uc *ShortenerUseCase) Shorten(ctx context.Context, URI string) (string, error) {
+
+	//TODO check in db for existed one, if there is no
+	//TODO check the count of links in db
+	count := len(URI)
+	//TODO if count < uc.digitiser.Max() - create new
+	//TODO else  - rewrite oldest(time)
+
+	short, err := uc.digitiser.String(count)
+	if err != nil {
+		return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.digitiser.String: %w", err)
+	}
+
+	return short, nil
+}
+
+// Lengthen - returns the URI associated with the given short identifier
+func (uc *ShortenerUseCase) Lengthen(ctx context.Context, short string) (string, error) {
+	// TODO : get short string from url
+
+	_, err := uc.digitiser.Digit(short)
+	if err != nil {
+		return "", fmt.Errorf("ShortenerUseCase - Lengthen - uc.digitiser.Digit: %w", err)
+	}
+
+	//TODO: get n return URI by id from db
+	return "URI", nil
+}

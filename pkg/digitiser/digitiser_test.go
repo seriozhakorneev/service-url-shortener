@@ -2,26 +2,52 @@ package digitiser
 
 import (
 	"fmt"
+	"log"
+	"math"
+	"os"
 	"reflect"
-	"sync"
 	"testing"
 )
 
 const (
+	// changing this parameters will affect tests performance
 	length = 5
-	digits = base64URL
-	base   = 64
-	max    = 1073741823
+	digits = Base64URL
 )
+
+var (
+	base, max int
+)
+
+func TestMain(m *testing.M) {
+	d := Digitiser{digits: digits, strLen: length, digBase: len(digits)}
+
+	err := d.makeLookup()
+	if err != nil {
+		log.Fatalf("Failed to make lookup in test: %s", err)
+	}
+
+	err = d.countMax(length)
+	if err != nil {
+		log.Fatalf("Failed to count Max in test: %s", err)
+
+	}
+
+	base, max = d.base(), d.Max()
+
+	code := m.Run()
+	os.Exit(code)
+}
 
 func TestDigitiser_New(t *testing.T) {
 	t.Parallel()
+
 	expected := Digitiser{
-		base:   base,
-		digits: digits,
-		lookup: map[rune]int{},
-		maxInt: max,
-		strLen: length,
+		digBase: base,
+		digits:  digits,
+		lookup:  map[rune]int{},
+		maxInt:  max,
+		strLen:  length,
 	}
 
 	err := expected.makeLookup()
@@ -40,7 +66,7 @@ func TestDigitiser_New(t *testing.T) {
 
 	duplicateDigits := "AA"
 	expectedErr := fmt.Errorf("make lookup failed: duplicate rune: %d", duplicateDigits[0])
-	expectedRes := Digitiser{base: 2, digits: duplicateDigits}
+	expectedRes := Digitiser{digBase: 2, digits: duplicateDigits}
 	result, err = New(duplicateDigits, 0)
 
 	if !reflect.DeepEqual(expectedErr, err) {
@@ -54,7 +80,7 @@ func TestDigitiser_New(t *testing.T) {
 func TestDigitiser_countMax(t *testing.T) {
 	t.Parallel()
 
-	d := Digitiser{digits: digits, base: len(digits)}
+	d := Digitiser{digits: digits, digBase: len(digits)}
 	expectedErr := fmt.Errorf("digitise failed: rune not found: %v", digits[len(digits)-1])
 
 	err := d.countMax(length)
@@ -73,7 +99,7 @@ func TestDigitiser_countMax(t *testing.T) {
 	}
 
 	if d.Max() != max {
-		t.Fatalf("expected max int: %v, got: %v", max, d.Max())
+		t.Fatalf("expected Max int: %v, got: %v", max, d.Max())
 	}
 }
 
@@ -111,13 +137,13 @@ func TestDigitiser_NewID_Errors(t *testing.T) {
 	}
 
 	expectedErr := fmt.Errorf("string exceeds the maximum allowed value(%v)", d.maxInt)
-	_, err = d.NewID("Helloo")
+	_, err = d.Digit("Heelloo8")
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
 
 	expectedErr = fmt.Errorf("digitise failed: rune not found: %v", '&')
-	_, err = d.NewID("Hell&")
+	_, err = d.Digit("Hell&")
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
@@ -127,11 +153,11 @@ func TestDigitiser_LookupIndex(t *testing.T) {
 	t.Parallel()
 
 	d := Digitiser{
-		base:   base,
-		digits: digits,
-		lookup: nil,
-		maxInt: max,
-		strLen: length,
+		digBase: base,
+		digits:  digits,
+		lookup:  nil,
+		maxInt:  max,
+		strLen:  length,
 	}
 
 	expectedErr := fmt.Errorf("index out of range: %v", 1)
@@ -150,58 +176,57 @@ func TestDigitiser_NewString(t *testing.T) {
 	}
 
 	expectedErr := fmt.Errorf("digit exceeds the maximum:(%v)", d.Max())
-	_, err = d.NewString(d.Max() + 1)
+	_, err = d.String(d.Max() + 1)
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
 
 	d.lookup = nil
 	expectedErr = fmt.Errorf("lookup index failed: %v", fmt.Errorf("index out of range: %v", 0))
-	_, err = d.NewString(0)
+	_, err = d.String(0)
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
 }
 
-func TestDigitiser_ResultsTillLength3(t *testing.T) {
+func TestDigitiser_Results(t *testing.T) {
 	t.Parallel()
 
-	for i := 0; i <= 3; i++ {
-		d, err := New(digits, i)
+	var (
+		notMax int
+		err    error
+		d      Digitiser
+	)
+
+	for i := 1; i <= length; i++ {
+		d, err = New(digits, i)
 		if err != nil {
 			t.Fatal("new digitiser failed in testing:", err)
 		}
-		testIDsInRange(t, &d, 0, d.Max())
-	}
-}
 
-func TestDigitiser_ResultsLength4(t *testing.T) {
-	t.Parallel()
+		// shorten Max value to speed up test
+		notMax = d.Max() / int(math.Pow(float64(i), float64(i)))
 
-	hundredT := 100000
-	d, err := New(digits, 4)
-	if err != nil {
-		t.Fatal("new digitiser failed in testing:", err)
-	}
-
-	for i, j := 0, d.Max(); i < j; i, j = i+hundredT, j-hundredT {
-		testIDsInRange(t, &d, i, i+hundredT)
-		testIDsInRange(t, &d, j-hundredT, j)
-
-		if (j-hundredT)-(i+hundredT) < hundredT {
-			testIDsInRange(t, &d, i+hundredT, j-hundredT)
-			break
+		for from, till := 0, notMax; from < till; from, till = from+1, till-1 {
+			err = testID(&d, from)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = testID(&d, till)
+			if err != nil {
+				t.Fatal(err)
+			}
 		}
 	}
 }
 
 func testID(d *Digitiser, expected int) error {
-	str, err := d.NewString(expected)
+	str, err := d.String(expected)
 	if err != nil {
 		return fmt.Errorf("new string failed in testing: %v, id(%v)", err, expected)
 	}
 
-	result, err := d.NewID(str)
+	result, err := d.Digit(str)
 	if err != nil {
 		return fmt.Errorf("new id failed in testing: %v, id(%v)", err, expected)
 	}
@@ -210,30 +235,4 @@ func testID(d *Digitiser, expected int) error {
 		return fmt.Errorf("expected id: %v, got: %v, string: '%s'", expected, result, str)
 	}
 	return nil
-}
-
-func testIDsInRange(t *testing.T, d *Digitiser, from, till int) {
-	var (
-		err error
-		wg  sync.WaitGroup
-	)
-
-	for i, j := from, till; i < j; i, j = i+1, j-1 {
-		wg.Add(2)
-
-		go func(a int) {
-			defer wg.Done()
-			err = testID(d, a)
-		}(i)
-
-		go func(a int) {
-			defer wg.Done()
-			err = testID(d, a)
-		}(j)
-	}
-
-	wg.Wait()
-	if err != nil {
-		t.Fatal(err)
-	}
 }
