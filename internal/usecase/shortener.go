@@ -8,13 +8,14 @@ import (
 // ShortenerUseCase -.
 type ShortenerUseCase struct {
 	digitiser Digitiser
+	blank     string
 	// string getter from short url
 	// repo
 }
 
 // New -.
-func New(d Digitiser) *ShortenerUseCase {
-	return &ShortenerUseCase{digitiser: d}
+func New(d Digitiser, b string) *ShortenerUseCase {
+	return &ShortenerUseCase{digitiser: d, blank: b}
 }
 
 // Shorten - shortens the URL, makes URL entry in the database
@@ -31,7 +32,7 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, er
 		return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.digitiser.String: %w", err)
 	}
 
-	return short, nil
+	return uc.blank + short, nil
 }
 
 // Lengthen - returns the URL associated with the given short URL

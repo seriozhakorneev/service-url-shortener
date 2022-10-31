@@ -7,3 +7,10 @@ http:
 
 logger:
   log_level: 'debug'
+
+digitiser:
+  base: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+  length: 5
+
+shortener:
+  blank: 'https://localhost/'

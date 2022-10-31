@@ -21,14 +21,13 @@ import (
 func Run(cfg *config.Config) {
 	l := logger.New(cfg.Log.Level)
 
-	// TODO: CONFIG
-	dig, err := digitiser.New(digitiser.Base64URL, 3)
+	dig, err := digitiser.New(cfg.Digitiser.Base, cfg.Digitiser.Length)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - dig.New: %w", err))
 	}
 
 	// Use Case
-	shortenerUseCase := usecase.New(&dig)
+	shortenerUseCase := usecase.New(&dig, cfg.Shortener.Blank)
 
 	// HTTP Server
 	handler := gin.New()

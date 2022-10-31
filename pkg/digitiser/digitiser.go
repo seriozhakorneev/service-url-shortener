@@ -5,8 +5,6 @@ import (
 	"math"
 )
 
-const Base64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-
 type Digitiser struct {
 	digits         string
 	digBase        int
