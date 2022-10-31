@@ -29,7 +29,7 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, er
 	//TODO if count < uc.digitiser.Max() - create new
 	//TODO else - rewrite oldest(time)
 
-	short, err := uc.digitiser.String(2789)
+	short, err := uc.digitiser.String(2796)
 	if err != nil {
 		return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.digitiser.String: %w", err)
 	}
@@ -39,7 +39,7 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, er
 
 // Lengthen - returns the URL associated with the given short URL
 func (uc *ShortenerUseCase) Lengthen(ctx context.Context, short string) (string, error) {
-	// TODO : get short string from url
+	//TODO : get short string from url
 
 	//digit, err := uc.digitiser.Digit(short)
 	//if err != nil {

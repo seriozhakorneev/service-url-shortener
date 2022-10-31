@@ -8,6 +8,9 @@ http:
 logger:
   log_level: 'debug'
 
+postgres:
+  pool_max: 2
+
 digitiser:
   base: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
   length: 5

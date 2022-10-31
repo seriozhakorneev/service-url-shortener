@@ -12,22 +12,30 @@ import (
 	"service-url-shortener/config"
 	v1 "service-url-shortener/internal/entrypoint/http/v1"
 	"service-url-shortener/internal/usecase"
-	"service-url-shortener/pkg/digitiser"
+	"service-url-shortener/internal/usecase/digitiser"
 	"service-url-shortener/pkg/httpserver"
 	"service-url-shortener/pkg/logger"
+	"service-url-shortener/pkg/postgres"
 )
 
 // Run creates objects via constructors.
 func Run(cfg *config.Config) {
 	l := logger.New(cfg.Log.Level)
 
-	dig, err := digitiser.New(cfg.Digitiser.Base, cfg.Digitiser.Length)
+	// Repository
+	pg, err := postgres.New(cfg.PG.URL, postgres.MaxPoolSize(cfg.PG.PoolMax))
+	if err != nil {
+		l.Fatal(fmt.Errorf("app - Run - postgres.New: %w", err))
+	}
+	defer pg.Close()
+
+	// Use Case
+	d, err := digitiser.New(cfg.Digitiser.Base, cfg.Digitiser.Length)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - digitiser.New: %w", err))
 	}
 
-	// Use Case
-	shortenerUseCase := usecase.New(&dig, fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port))
+	shortenerUseCase := usecase.New(&d, fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port))
 
 	// HTTP Server
 	handler := gin.New()
