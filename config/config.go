@@ -9,9 +9,11 @@ import (
 type (
 	// Config -.
 	Config struct {
-		App  `yaml:"app"`
-		HTTP `yaml:"http"`
-		Log  `yaml:"logger"`
+		App       `yaml:"app"`
+		HTTP      `yaml:"http"`
+		Log       `yaml:"logger"`
+		Digitiser `yaml:"digitiser"`
+		URL       `yaml:"url"`
 	}
 
 	// App -.
@@ -28,6 +30,17 @@ type (
 	// Log -.
 	Log struct {
 		Level string `env-required:"true" yaml:"log_level"   env:"LOG_LEVEL"`
+	}
+
+	// Digitiser -.
+	Digitiser struct {
+		Base   string `yaml:"base"`
+		Length int    `yaml:"length"`
+	}
+
+	// URL -.
+	URL struct {
+		Blank string `yaml:"blank"`
 	}
 )
 
