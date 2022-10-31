@@ -12,5 +12,5 @@ digitiser:
   base: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
   length: 5
 
-shortener:
-  blank: 'https://localhost/'
+url:
+  blank: 'http://localhost'

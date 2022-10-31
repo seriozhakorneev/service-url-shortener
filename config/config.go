@@ -13,7 +13,7 @@ type (
 		HTTP      `yaml:"http"`
 		Log       `yaml:"logger"`
 		Digitiser `yaml:"digitiser"`
-		Shortener `yaml:"shortener"`
+		URL       `yaml:"url"`
 	}
 
 	// App -.
@@ -38,8 +38,8 @@ type (
 		Length int    `yaml:"length"`
 	}
 
-	// Shortener -.
-	Shortener struct {
+	// URL -.
+	URL struct {
 		Blank string `yaml:"blank"`
 	}
 )

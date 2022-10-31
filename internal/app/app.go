@@ -23,11 +23,11 @@ func Run(cfg *config.Config) {
 
 	dig, err := digitiser.New(cfg.Digitiser.Base, cfg.Digitiser.Length)
 	if err != nil {
-		l.Fatal(fmt.Errorf("app - Run - dig.New: %w", err))
+		l.Fatal(fmt.Errorf("app - Run - digitiser.New: %w", err))
 	}
 
 	// Use Case
-	shortenerUseCase := usecase.New(&dig, cfg.Shortener.Blank)
+	shortenerUseCase := usecase.New(&dig, fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port))
 
 	// HTTP Server
 	handler := gin.New()
