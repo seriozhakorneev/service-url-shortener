@@ -28,7 +28,7 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, er
 
 	err := uc.repo.Test(ctx)
 	if err != nil {
-		return "", fmt.Errorf("ShortenerUseCase - Shorten - s.repo.Store: %w", err)
+		return "", fmt.Errorf("ShortenerUseCase - Shorten - s.repo.Test: %w", err)
 	}
 
 	return "", nil
