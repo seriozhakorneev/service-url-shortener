@@ -15,4 +15,9 @@ type (
 		String(int) (string, error)
 		Max() int
 	}
+
+	// ShortenerRepo -.
+	ShortenerRepo interface {
+		Test(context.Context) error
+	}
 )

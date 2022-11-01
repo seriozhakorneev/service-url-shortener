@@ -13,6 +13,7 @@ import (
 	v1 "service-url-shortener/internal/entrypoint/http/v1"
 	"service-url-shortener/internal/usecase"
 	"service-url-shortener/internal/usecase/digitiser"
+	"service-url-shortener/internal/usecase/repo"
 	"service-url-shortener/pkg/httpserver"
 	"service-url-shortener/pkg/logger"
 	"service-url-shortener/pkg/postgres"
@@ -35,7 +36,11 @@ func Run(cfg *config.Config) {
 		l.Fatal(fmt.Errorf("app - Run - digitiser.New: %w", err))
 	}
 
-	shortenerUseCase := usecase.New(&d, fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port))
+	shortenerUseCase := usecase.New(
+		repo.New(pg),
+		&d,
+		fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port),
+	)
 
 	// HTTP Server
 	handler := gin.New()
