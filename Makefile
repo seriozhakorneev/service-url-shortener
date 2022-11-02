@@ -60,14 +60,14 @@ integration-test: ### run integration-test
 	go clean -testcache && go test -v ./integration-test/...
 .PHONY: integration-test
 
-mock: ### run mockery
-	mockery --all -r --case snake
-.PHONY: mock
-
 migrate-create:  ### create new migration
-	migrate create -ext sql -dir migrations 'migrate_name'
+	migrate create -ext sql -dir migrations 'init_schema'
 .PHONY: migrate-create
 
 migrate-up: ### migration up
 	migrate -path migrations -database '$(PG_URL)?sslmode=disable' up
 .PHONY: migrate-up
+
+migrate-down: ### migration down
+	migrate -path migrations -database '$(PG_URL)?sslmode=disable' down
+.PHONY: migrate-down
