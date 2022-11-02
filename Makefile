@@ -13,6 +13,10 @@ compose-up: ### Run docker-compose
 	docker-compose up --build -d postgres && docker-compose logs -f
 .PHONY: compose-up
 
+compose-logs: ### Run docker-compose logs
+	docker-compose logs -f
+.PHONY: compose-up
+
 compose-up-integration-test: ### Run docker-compose with integration test
 	docker-compose up --build --abort-on-container-exit --exit-code-from integration
 .PHONY: compose-up-integration-test
@@ -65,9 +69,9 @@ migrate-create:  ### create new migration
 .PHONY: migrate-create
 
 migrate-up: ### migration up
-	migrate -path migrations -database '$(PG_URL)?sslmode=disable' up
+	migrate -path migrations -database '$(PG_URL)?sslmode=disable' -verbose up
 .PHONY: migrate-up
 
 migrate-down: ### migration down
-	migrate -path migrations -database '$(PG_URL)?sslmode=disable' down
+	migrate -path migrations -database '$(PG_URL)?sslmode=disable' -verbose down
 .PHONY: migrate-down

@@ -2,7 +2,10 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	internal "service-url-shortener/internal/errors"
 )
 
 // ShortenerUseCase -.
@@ -10,8 +13,7 @@ type ShortenerUseCase struct {
 	repo      ShortenerRepo
 	digitiser Digitiser
 	blank     string
-	// string getter from short url
-	// repo
+	//TODO: string getter from short url
 }
 
 // New -.
@@ -23,30 +25,50 @@ func New(r ShortenerRepo, d Digitiser, b string) *ShortenerUseCase {
 	}
 }
 
+// exist - checks the repository for an already existing URL,
+// if found, returns it short representation in URL.
+func (uc *ShortenerUseCase) exist(ctx context.Context, URL string) (string, error) {
+	id, err := uc.repo.GetID(ctx, URL)
+	if err != nil {
+		if errors.Is(err, internal.ErrNotFoundURL) {
+			return "", err
+		}
+		return "", fmt.Errorf("exist - uc.repo.GetID: %w", err)
+	}
+
+	short, err := uc.digitiser.String(id)
+	if err != nil {
+		return "", fmt.Errorf("exist - uc.digitiser.String: %w", err)
+	}
+
+	err = uc.repo.Touch(ctx, id)
+	if err != nil {
+		return "", fmt.Errorf("exist - uc.repo.Touch: %w", err)
+	}
+
+	return short, nil
+}
+
 // Shorten - shortens the URL, makes URL entry in the database
 func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, error) {
 
-	err := uc.repo.Test(ctx)
+	// check in repo for already existed one and return,
+	short, err := uc.exist(ctx, URL)
 	if err != nil {
-		return "", fmt.Errorf("ShortenerUseCase - Shorten - s.repo.Test: %w", err)
+		if !errors.Is(err, internal.ErrNotFoundURL) {
+			return "", fmt.Errorf("ShortenerUseCase - Shorten - %w", err)
+		}
+	} else {
+		return uc.blank + short, nil
 	}
 
-	return "", nil
-
-	//TODO check in db for existed one n return,
+	// there is no
 	//TODO if there is no check the count of links in db
-
-	//count :=
-
 	//TODO if count < uc.digitiser.Max() - create new
 	//TODO else - rewrite oldest(time)
 
-	//short, err := uc.digitiser.String(2796)
-	//if err != nil {
-	//	return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.digitiser.String: %w", err)
-	//}
+	return "nil", nil
 
-	//return uc.blank + short, nil
 }
 
 // Lengthen - returns the URL associated with the given short URL
