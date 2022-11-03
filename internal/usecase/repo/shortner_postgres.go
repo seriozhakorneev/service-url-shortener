@@ -54,6 +54,25 @@ func (r *ShortenerRepo) GetID(ctx context.Context, URL string) (int, error) {
 	return id, nil
 }
 
+// GetURL -.
+func (r *ShortenerRepo) GetURL(ctx context.Context, id int) (original string, err error) {
+	err = r.Pool.QueryRow(
+		ctx,
+		`SELECT original FROM urls WHERE id = $1`,
+		id,
+	).Scan(&original)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = internal.ErrNotFoundURL
+			return
+		}
+		err = fmt.Errorf("ShortenerRepo - GetURL - r.Pool.QueryRow.Scan: %w", err)
+		return
+	}
+
+	return
+}
+
 // Touch -.
 func (r *ShortenerRepo) Touch(ctx context.Context, id int) (err error) {
 	pg, err := r.Pool.Exec(
@@ -79,8 +98,7 @@ func (r *ShortenerRepo) Touch(ctx context.Context, id int) (err error) {
 func (r *ShortenerRepo) Rewrite(ctx context.Context, URL string) (id int, err error) {
 	err = r.Pool.QueryRow(
 		ctx,
-		`
-			UPDATE urls
+		`UPDATE urls
 			SET touched = $1, original = $2
             WHERE touched =
             	(

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 
 	internal "service-url-shortener/internal/errors"
 )
@@ -13,7 +15,6 @@ type ShortenerUseCase struct {
 	repo      ShortenerRepo
 	digitiser Digitiser
 	blank     string
-	//TODO: string getter from short url
 }
 
 // New -.
@@ -90,16 +91,21 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, er
 }
 
 // Lengthen - returns the URL associated with the given short URL
-func (uc *ShortenerUseCase) Lengthen(ctx context.Context, short string) (string, error) {
-	//TODO : get short string from url
+func (uc *ShortenerUseCase) Lengthen(ctx context.Context, shortURL string) (string, error) {
+	u, _ := url.Parse(shortURL)
 
-	// uc.digitiser.Max() // 992436542
+	id, err := uc.digitiser.Digit(strings.TrimLeft(u.EscapedPath(), "/"))
+	if err != nil {
+		return "", fmt.Errorf("ShortenerUseCase - Lengthen - uc.digitiser.Digit: %w", err)
+	}
 
-	//digit, err := uc.digitiser.Digit(short)
-	//if err != nil {
-	//	return "", fmt.Errorf("ShortenerUseCase - Lengthen - uc.digitiser.Digit: %w", err)
-	//}
+	URL, err := uc.repo.GetURL(ctx, id)
+	if err != nil {
+		if errors.Is(err, internal.ErrNotFoundURL) {
+			return "", err
+		}
+		return "", fmt.Errorf("ShortenerUseCase - Lengthen - uc.repo.GetURL: %w", err)
+	}
 
-	//TODO: get n return URL by digit from db
-	return "original_long_url", nil
+	return URL, nil
 }
