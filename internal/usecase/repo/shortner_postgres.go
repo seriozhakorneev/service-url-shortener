@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4"
+
 	internal "service-url-shortener/internal/errors"
 	"service-url-shortener/pkg/postgres"
 )

@@ -49,7 +49,7 @@ func (uc *ShortenerUseCase) exist(ctx context.Context, URL string) (string, erro
 	return short, nil
 }
 
-// Shorten - shortens the URL, makes URL entry in the database
+// Shorten - shortens the URL, returns short URL.
 func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, error) {
 
 	// check in repo for already existed one and return,
@@ -64,7 +64,9 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, er
 
 	// there is no
 	//TODO if there is no check the count of links in db
-	//TODO if count < uc.digitiser.Max() - create new
+
+	//TODO if count < uc.digitiser.Max() - insert new + count++
+
 	//TODO else - rewrite oldest(time)
 
 	return "nil", nil
