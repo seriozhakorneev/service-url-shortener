@@ -15,4 +15,14 @@ type (
 		String(int) (string, error)
 		Max() int
 	}
+
+	// ShortenerRepo -.
+	ShortenerRepo interface {
+		Create(context.Context, string) (int, error)
+		Rewrite(context.Context, string) (int, error)
+		GetURL(context.Context, int) (string, error)
+		GetID(context.Context, string) (int, error)
+		Touch(context.Context, int) error
+		Count(context.Context) (int, error)
+	}
 )

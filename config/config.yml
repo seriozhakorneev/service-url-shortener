@@ -8,9 +8,14 @@ http:
 logger:
   log_level: 'debug'
 
+postgres:
+  pool_max: 2
+
 digitiser:
-  base: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+  # sensitive values, changes can lead to maximum
+  # allowable integer errors in code or storage
+  base: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
   length: 5
 
 url:
-  blank: 'http://localhost'
+  blank: 'http://127.0.0.1'

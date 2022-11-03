@@ -1,11 +1,13 @@
 package v1
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"service-url-shortener/internal/entity"
+	internal "service-url-shortener/internal/errors"
 	"service-url-shortener/internal/usecase"
 	"service-url-shortener/pkg/logger"
 )
@@ -58,6 +60,11 @@ func (r *shortenerRoutes) get(c *gin.Context) {
 
 	URL, err := r.t.Lengthen(c.Request.Context(), request.URL)
 	if err != nil {
+		if errors.Is(err, internal.ErrNotFoundURL) {
+			errorResponse(c, http.StatusNotFound, err.Error())
+
+			return
+		}
 		r.l.Error(err, "http - v1 - get")
 		errorResponse(c, http.StatusInternalServerError, "shortener service problems")
 

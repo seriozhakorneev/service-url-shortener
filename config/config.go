@@ -12,6 +12,7 @@ type (
 		App       `yaml:"app"`
 		HTTP      `yaml:"http"`
 		Log       `yaml:"logger"`
+		PG        `yaml:"postgres"`
 		Digitiser `yaml:"digitiser"`
 		URL       `yaml:"url"`
 	}
@@ -30,6 +31,12 @@ type (
 	// Log -.
 	Log struct {
 		Level string `env-required:"true" yaml:"log_level"   env:"LOG_LEVEL"`
+	}
+
+	// PG -.
+	PG struct {
+		PoolMax int    `env-required:"true" yaml:"pool_max" env:"PG_POOL_MAX"`
+		URL     string `env-required:"true"                 env:"PG_URL"`
 	}
 
 	// Digitiser -.
