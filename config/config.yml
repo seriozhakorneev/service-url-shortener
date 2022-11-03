@@ -12,6 +12,8 @@ postgres:
   pool_max: 2
 
 digitiser:
+  # sensitive values they can lead to maximum
+  # allowable integer errors in code or storage
   base: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
   length: 5
 

@@ -51,8 +51,7 @@ func (uc *ShortenerUseCase) exist(ctx context.Context, URL string) (string, erro
 
 // Shorten - shortens the URL, returns short URL.
 func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, error) {
-
-	// check in repo for already existed one and return,
+	// check in storage for already existed URL and return it
 	short, err := uc.exist(ctx, URL)
 	if err != nil {
 		if !errors.Is(err, internal.ErrNotFoundURL) {
@@ -62,20 +61,39 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, er
 		return uc.blank + short, nil
 	}
 
-	// there is no
-	//TODO if there is no check the count of links in db
+	// count of urls in storage
+	count, err := uc.repo.Count(ctx)
+	if err != nil {
+		return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.repo.Count: %w", err)
+	}
 
-	//TODO if count < uc.digitiser.Max() - insert new + count++
+	var id int
+	// creating new URL or rewriting the oldest URL
+	if count < uc.digitiser.Max() {
+		id, err = uc.repo.Create(ctx, URL)
+		if err != nil {
+			return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.repo.Create: %w", err)
+		}
+	} else {
+		id, err = uc.repo.Rewrite(ctx, URL)
+		if err != nil {
+			return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.repo.Rewrite: %w", err)
+		}
+	}
 
-	//TODO else - rewrite oldest(time)
+	short, err = uc.digitiser.String(id)
+	if err != nil {
+		return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.digitiser.String: %w", err)
+	}
 
-	return "nil", nil
-
+	return uc.blank + short, nil
 }
 
 // Lengthen - returns the URL associated with the given short URL
 func (uc *ShortenerUseCase) Lengthen(ctx context.Context, short string) (string, error) {
 	//TODO : get short string from url
+
+	// uc.digitiser.Max() // 992436542
 
 	//digit, err := uc.digitiser.Digit(short)
 	//if err != nil {

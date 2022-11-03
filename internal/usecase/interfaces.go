@@ -18,8 +18,10 @@ type (
 
 	// ShortenerRepo -.
 	ShortenerRepo interface {
-		Insert(context.Context, string) (int, error)
+		Create(context.Context, string) (int, error)
+		Rewrite(context.Context, string) (int, error)
 		GetID(context.Context, string) (int, error)
 		Touch(context.Context, int) error
+		Count(context.Context) (int, error)
 	}
 )
