@@ -33,10 +33,10 @@ func Run(cfg *config.Config) {
 	// Use Case
 	d, err := digitiser.New(cfg.Digitiser.Base, cfg.Digitiser.Length)
 	if err != nil {
-		l.Fatal(fmt.Errorf("app - Run - digitiser.New: %w", err))
+		l.Fatal(fmt.Errorf("app - Run - digitiser.NewShortener: %w", err))
 	}
 
-	shortenerUseCase := usecase.New(
+	shortenerUseCase := usecase.NewShortener(
 		repo.New(pg),
 		&d,
 		fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port),

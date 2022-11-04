@@ -16,8 +16,8 @@ type (
 		Max() int
 	}
 
-	// ShortenerRepo -.
-	ShortenerRepo interface {
+	// UrlsRepo -.
+	UrlsRepo interface {
 		Create(context.Context, string) (int, error)
 		Rewrite(context.Context, string) (int, error)
 		GetURL(context.Context, int) (string, error)
