@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"service-url-shortener/config"
-	v1 "service-url-shortener/internal/entrypoint/http/v1"
+	"service-url-shortener/internal/entrypoint/http"
 	"service-url-shortener/internal/usecase"
 	"service-url-shortener/internal/usecase/digitiser"
 	"service-url-shortener/internal/usecase/repo"
@@ -44,7 +44,7 @@ func Run(cfg *config.Config) {
 
 	// HTTP Server
 	handler := gin.New()
-	v1.NewRouter(handler, l, shortenerUseCase)
+	http.NewRouter(handler, l, shortenerUseCase)
 
 	log.Printf("swagger docs on  http://localhost:%v/swagger/index.html", cfg.HTTP.Port)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
