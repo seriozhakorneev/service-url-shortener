@@ -12,13 +12,13 @@ import (
 
 // ShortenerUseCase -.
 type ShortenerUseCase struct {
-	repo      ShortenerRepo
+	repo      UrlsRepo
 	digitiser Digitiser
 	blank     string
 }
 
-// New -.
-func New(r ShortenerRepo, d Digitiser, b string) *ShortenerUseCase {
+// NewShortener -.
+func NewShortener(r UrlsRepo, d Digitiser, b string) *ShortenerUseCase {
 	return &ShortenerUseCase{
 		repo:      r,
 		digitiser: d,

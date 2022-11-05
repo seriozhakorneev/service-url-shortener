@@ -1,4 +1,6 @@
-package v1
+package http
+
+/*
 
 import (
 	"errors"
@@ -27,7 +29,6 @@ func newShortenerRoutes(handler *gin.RouterGroup, t usecase.Shortener, l logger.
 	}
 }
 
-// TODO docs
 func (r *shortenerRoutes) create(c *gin.Context) {
 	var request entity.ShortenerData
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -48,7 +49,6 @@ func (r *shortenerRoutes) create(c *gin.Context) {
 	c.JSON(http.StatusOK, entity.ShortenerData{URL: shortURL})
 }
 
-// TODO docs
 func (r *shortenerRoutes) get(c *gin.Context) {
 	var request entity.ShortenerData
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -73,3 +73,5 @@ func (r *shortenerRoutes) get(c *gin.Context) {
 
 	c.JSON(http.StatusOK, entity.ShortenerData{URL: URL})
 }
+
+*/
