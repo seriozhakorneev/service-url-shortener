@@ -3,13 +3,15 @@ package app
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
-
+	"google.golang.org/grpc"
 	"service-url-shortener/config"
+	rgrpc "service-url-shortener/internal/entrypoint/grpc"
 	"service-url-shortener/internal/entrypoint/http"
 	"service-url-shortener/internal/usecase"
 	"service-url-shortener/internal/usecase/digitiser"
@@ -42,6 +44,23 @@ func Run(cfg *config.Config) {
 		fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port),
 	)
 
+	//TODO !!!!
+
+	lis, err := net.Listen(cfg.GRPC.Network, fmt.Sprintf("localhost:%d", cfg.GRPC.Port))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	// GRPC Server
+	grpcServer := grpc.NewServer()
+	rgrpc.NewRouter(grpcServer, shortenerUseCase, l)
+
+	//TODO IT BLOCKS ALL NEXT CODE
+	err = grpcServer.Serve(lis)
+	if err != nil {
+		l.Fatal(fmt.Errorf("app - Run - grpcServer - grpcServer.Serve: %w", err))
+	}
+
 	// HTTP Server
 	handler := gin.New()
 	http.NewRouter(handler, l, shortenerUseCase)
@@ -53,6 +72,7 @@ func Run(cfg *config.Config) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
+	// TODO GRPC SERVER HERE
 	select {
 	case s := <-interrupt:
 		l.Info("app - Run - signal: " + s.String())

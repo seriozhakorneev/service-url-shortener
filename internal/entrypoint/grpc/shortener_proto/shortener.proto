@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package shortener_proto;
+option go_package = "service-url-shortener/internal/entrypoint/grpc/shortener_proto";
+
+// The Shortener service definition.
+service Shortener {
+  // Create short URL by sending original.
+  rpc Create (ShortenerData) returns (ShortenerData) {}
+  // Get original URL by sending short.
+  rpc Get (ShortenerData) returns (ShortenerData) {}
+}
+
+// The shortener message containing URL.
+message ShortenerData {
+  string URL = 1;
+}

@@ -11,9 +11,13 @@ logger:
 postgres:
   pool_max: 2
 
+grpc:
+  network: 'tcp'
+  port: 50051
+
 digitiser:
-  # sensitive values, changes can lead to maximum
-  # allowable integer errors in code or storage
+  # sensitive values, changes can lead to maximum allowable integer errors
+  # in code or storage, check digitiser.Max()
   base: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
   length: 5
 

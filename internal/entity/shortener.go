@@ -6,6 +6,8 @@ import (
 	"regexp"
 )
 
+// TODO: Выпилить но оставить валидатор
+
 // ShortenerData -.
 type ShortenerData struct {
 	URL string `json:"URL"`
