@@ -64,7 +64,7 @@ func (s *Server) debugMessage() {
 		for _, method := range v.Methods {
 			fmt.Fprintf(
 				DefaultWriter,
-				" - %s:  -->  %s stream: server:%v/client:%v\n",
+				" - %s:  -->  %s stream(server:%v client:%v)\n",
 				k,
 				method.Name,
 				method.IsServerStream,

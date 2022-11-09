@@ -19,6 +19,8 @@ var (
 	serverHostOverride = flag.String("server_host_override", "x.test.example.com", "The server name used to verify the hostname returned by the TLS handshake")
 )
 
+// TODO client construction for tests
+
 func createShort(client pb.ShortenerClient, data *pb.ShortenerData) {
 	log.Printf("Creating short url for (%s)", data.GetURL())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -65,6 +67,6 @@ func main() {
 	client := pb.NewShortenerClient(conn)
 
 	// Looking for a URL
-	getOriginal(client, &pb.ShortenerData{URL: "SHORT_URL_PASSED"})
-	createShort(client, &pb.ShortenerData{URL: "ORIGINAL_URL_PASSED"})
+	getOriginal(client, &pb.ShortenerData{URL: "http://127.0.0.1:8080/B"})
+	//createShort(client, &pb.ShortenerData{URL: "https://apps.apple.com/ru/app/football-manager-2023-touch/id1626267810"})
 }

@@ -93,8 +93,13 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, er
 // Lengthen - returns the URL associated with the given short URL
 func (uc *ShortenerUseCase) Lengthen(ctx context.Context, shortURL string) (string, error) {
 	u, _ := url.Parse(shortURL)
+	short := strings.TrimLeft(u.EscapedPath(), "/")
 
-	id, err := uc.digitiser.Digit(strings.TrimLeft(u.EscapedPath(), "/"))
+	if len(short) > uc.digitiser.Length() {
+		return "", internal.ErrLengthTooHigh
+	}
+
+	id, err := uc.digitiser.Digit(short)
 	if err != nil {
 		return "", fmt.Errorf("ShortenerUseCase - Lengthen - uc.digitiser.Digit: %w", err)
 	}

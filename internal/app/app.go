@@ -45,6 +45,8 @@ func Run(cfg *config.Config) {
 		fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port),
 	)
 
+	// TODO logs like gin when calls
+
 	// GRPC Server
 	grpcSer := grpc.NewServer()
 	grpcroutes.NewRouter(grpcSer, l, shortenerUseCase)
