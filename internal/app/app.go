@@ -3,19 +3,20 @@ package app
 import (
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
+
 	"service-url-shortener/config"
-	rgrpc "service-url-shortener/internal/entrypoint/grpc"
+	grpcroutes "service-url-shortener/internal/entrypoint/grpc"
 	"service-url-shortener/internal/entrypoint/http"
 	"service-url-shortener/internal/usecase"
 	"service-url-shortener/internal/usecase/digitiser"
 	"service-url-shortener/internal/usecase/repo"
+	"service-url-shortener/pkg/grpc/server"
 	"service-url-shortener/pkg/httpserver"
 	"service-url-shortener/pkg/logger"
 	"service-url-shortener/pkg/postgres"
@@ -44,21 +45,13 @@ func Run(cfg *config.Config) {
 		fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port),
 	)
 
-	//TODO !!!!
-
-	lis, err := net.Listen(cfg.GRPC.Network, fmt.Sprintf("localhost:%d", cfg.GRPC.Port))
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-
 	// GRPC Server
-	grpcServer := grpc.NewServer()
-	rgrpc.NewRouter(grpcServer, shortenerUseCase, l)
+	grpcSer := grpc.NewServer()
+	grpcroutes.NewRouter(grpcSer, l, shortenerUseCase)
 
-	//TODO IT BLOCKS ALL NEXT CODE
-	err = grpcServer.Serve(lis)
+	grpcServer, err := server.New(grpcSer, cfg.GRPC.Network, cfg.GRPC.Port, l)
 	if err != nil {
-		l.Fatal(fmt.Errorf("app - Run - grpcServer - grpcServer.Serve: %w", err))
+		l.Fatal(fmt.Errorf("app - Run - grpcServer - server.New: %w", err))
 	}
 
 	// HTTP Server
@@ -72,19 +65,23 @@ func Run(cfg *config.Config) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
-	// TODO GRPC SERVER HERE
 	select {
 	case s := <-interrupt:
 		l.Info("app - Run - signal: " + s.String())
 	case err = <-httpServer.Notify():
 		l.Error(fmt.Errorf("app - Run - httpServer.Notify: %w", err))
+	case err = <-grpcServer.Notify():
+		l.Error(fmt.Errorf("app - Run - grpcServer.Notify: %w", err))
 	}
 
 	// Shutdown
-	l.Debug("Server shutdown")
-
 	err = httpServer.Shutdown()
 	if err != nil {
 		l.Error(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
+	}
+
+	err = grpcServer.Shutdown()
+	if err != nil {
+		l.Error(fmt.Errorf("app - Run - grpcServer.Shutdown: %w", err))
 	}
 }

@@ -8,7 +8,7 @@ import (
 )
 
 // NewRouter -.
-func NewRouter(s grpc.ServiceRegistrar, t usecase.Shortener, l logger.Interface) {
+func NewRouter(s grpc.ServiceRegistrar, l logger.Interface, t usecase.Shortener) {
 	{
 		newShortenerRoutes(s, t, l)
 	}
