@@ -51,17 +51,15 @@ func (s *shortenerRoutes) Get(ctx context.Context, request *pb.ShortenerData) (*
 
 	original, err := s.t.Lengthen(ctx, request.URL)
 	if err != nil {
-
-		if errors.Is(err, internal.ErrLengthTooHigh) {
+		switch {
+		case errors.Is(err, internal.ErrLengthTooHigh):
 			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-
-		if errors.Is(err, internal.ErrNotFoundURL) {
+		case errors.Is(err, internal.ErrNotFoundURL):
 			return nil, status.Error(codes.NotFound, err.Error())
+		default:
+			s.l.Error(err, "grpc - Shortener - Get")
+			return nil, status.Error(codes.Internal, "shortener service problems")
 		}
-
-		s.l.Error(err, "grpc - Shortener - Get")
-		return nil, status.Error(codes.Internal, "shortener service problems")
 	}
 
 	return &pb.ShortenerData{URL: original}, nil
