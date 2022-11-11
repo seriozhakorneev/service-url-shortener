@@ -39,7 +39,7 @@ func (s *shortenerRoutes) Create(ctx context.Context, request *pb.ShortenerData)
 		return nil, status.Error(codes.Internal, "shortener service problems")
 	}
 
-	return &pb.ShortenerData{URL: short}, nil
+	return &pb.ShortenerData{URL: short}, status.Error(codes.OK, "success")
 }
 
 // Get returns original URL from given short if exists.
@@ -62,5 +62,5 @@ func (s *shortenerRoutes) Get(ctx context.Context, request *pb.ShortenerData) (*
 		}
 	}
 
-	return &pb.ShortenerData{URL: original}, nil
+	return &pb.ShortenerData{URL: original}, status.Error(codes.OK, "success")
 }
