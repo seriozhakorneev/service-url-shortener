@@ -67,6 +67,6 @@ func main() {
 	client := pb.NewShortenerClient(conn)
 
 	// Looking for a URL
-	getOriginal(client, &pb.ShortenerData{URL: "http://127.0.0.1:8080/Bффывфыв"})
+	getOriginal(client, &pb.ShortenerData{URL: "http://127.0.0.1:8080/B"})
 	//createShort(client, &pb.ShortenerData{URL: "https://apps.apple.com/ru/app/football-manager-2023-touch/id1626267810"})
 }
