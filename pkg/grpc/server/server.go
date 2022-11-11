@@ -17,7 +17,8 @@ const (
 )
 
 var (
-	DefaultWriter io.Writer = os.Stdout
+	defaultWriter io.Writer = os.Stdout
+	debugEnv                = "GRPC_DEBUG"
 )
 
 // Server -.
@@ -51,7 +52,9 @@ func New(server *grpc.Server, network string, port int, l logger.Interface, opts
 		opt(s)
 	}
 
-	s.debugMessage()
+	if os.Getenv(debugEnv) == "true" {
+		s.debugMessage()
+	}
 
 	go s.start()
 
@@ -59,11 +62,11 @@ func New(server *grpc.Server, network string, port int, l logger.Interface, opts
 }
 
 func (s *Server) debugMessage() {
-	fmt.Fprintln(DefaultWriter, "[GRPC]")
+	fmt.Fprintln(defaultWriter, "[GRPC]")
 	for k, v := range s.server.GetServiceInfo() {
 		for _, method := range v.Methods {
 			fmt.Fprintf(
-				DefaultWriter,
+				defaultWriter,
 				" - %s:  -->  %s stream(server:%v client:%v)\n",
 				k,
 				method.Name,
@@ -71,7 +74,7 @@ func (s *Server) debugMessage() {
 				method.IsClientStream,
 			)
 		}
-		fmt.Fprintln(DefaultWriter)
+		fmt.Fprintln(defaultWriter)
 	}
 }
 

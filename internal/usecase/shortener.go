@@ -96,7 +96,7 @@ func (uc *ShortenerUseCase) Lengthen(ctx context.Context, shortURL string) (stri
 	short := strings.TrimLeft(u.EscapedPath(), "/")
 
 	if len(short) > uc.digitiser.Length() {
-		return "", internal.ErrLengthTooHigh
+		return "", internal.ErrImpossibleShortURL
 	}
 
 	id, err := uc.digitiser.Digit(short)

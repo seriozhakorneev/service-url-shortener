@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,7 +15,7 @@ import (
 	"service-url-shortener/internal/usecase"
 	"service-url-shortener/internal/usecase/digitiser"
 	"service-url-shortener/internal/usecase/repo"
-	"service-url-shortener/pkg/grpc/server"
+	grpcserver "service-url-shortener/pkg/grpc/server"
 	"service-url-shortener/pkg/httpserver"
 	"service-url-shortener/pkg/logger"
 	"service-url-shortener/pkg/postgres"
@@ -45,13 +44,11 @@ func Run(cfg *config.Config) {
 		fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port),
 	)
 
-	// TODO logs like gin when calls
-
 	// GRPC Server
-	grpcSer := grpc.NewServer()
+	grpcSer := grpc.NewServer(grpc.UnaryInterceptor(grpcserver.Logs))
 	grpcroutes.NewRouter(grpcSer, l, shortenerUseCase)
 
-	grpcServer, err := server.New(grpcSer, cfg.GRPC.Network, cfg.GRPC.Port, l)
+	grpcServer, err := grpcserver.New(grpcSer, cfg.GRPC.Network, cfg.GRPC.Port, l)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - grpcServer - server.New: %w", err))
 	}
@@ -60,7 +57,6 @@ func Run(cfg *config.Config) {
 	handler := gin.New()
 	http.NewRouter(handler, l, shortenerUseCase)
 
-	log.Printf("swagger docs on  http://localhost:%v/swagger/index.html", cfg.HTTP.Port)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal
