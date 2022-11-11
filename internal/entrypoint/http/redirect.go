@@ -21,6 +21,7 @@ func newRedirectRoute(handler *gin.Engine, t usecase.Shortener, l logger.Interfa
 	handler.GET("/*any", r.get)
 }
 
+// TODO DOCS :
 func (r *redirectRoutes) get(c *gin.Context) {
 	URL, err := r.t.Lengthen(c.Request.Context(), c.Request.RequestURI)
 	if err != nil {

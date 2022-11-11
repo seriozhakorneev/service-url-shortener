@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
@@ -13,6 +12,7 @@ type (
 		HTTP      `yaml:"http"`
 		Log       `yaml:"logger"`
 		PG        `yaml:"postgres"`
+		GRPC      `yaml:"grpc"`
 		Digitiser `yaml:"digitiser"`
 		URL       `yaml:"url"`
 	}
@@ -37,6 +37,11 @@ type (
 	PG struct {
 		PoolMax int    `env-required:"true" yaml:"pool_max" env:"PG_POOL_MAX"`
 		URL     string `env-required:"true"                 env:"PG_URL"`
+	}
+
+	GRPC struct {
+		Network string `env-required:"true" yaml:"network" env:"GRPC_NETWORK"`
+		Port    int    `env-required:"true" yaml:"port" env:"GRPC_PORT"`
 	}
 
 	// Digitiser -.

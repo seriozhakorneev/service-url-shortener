@@ -8,12 +8,15 @@ import (
 	"syscall"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 
 	"service-url-shortener/config"
+	grpcroutes "service-url-shortener/internal/entrypoint/grpc"
 	"service-url-shortener/internal/entrypoint/http"
 	"service-url-shortener/internal/usecase"
 	"service-url-shortener/internal/usecase/digitiser"
 	"service-url-shortener/internal/usecase/repo"
+	"service-url-shortener/pkg/grpc/server"
 	"service-url-shortener/pkg/httpserver"
 	"service-url-shortener/pkg/logger"
 	"service-url-shortener/pkg/postgres"
@@ -42,6 +45,17 @@ func Run(cfg *config.Config) {
 		fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port),
 	)
 
+	// TODO logs like gin when calls
+
+	// GRPC Server
+	grpcSer := grpc.NewServer()
+	grpcroutes.NewRouter(grpcSer, l, shortenerUseCase)
+
+	grpcServer, err := server.New(grpcSer, cfg.GRPC.Network, cfg.GRPC.Port, l)
+	if err != nil {
+		l.Fatal(fmt.Errorf("app - Run - grpcServer - server.New: %w", err))
+	}
+
 	// HTTP Server
 	handler := gin.New()
 	http.NewRouter(handler, l, shortenerUseCase)
@@ -58,13 +72,18 @@ func Run(cfg *config.Config) {
 		l.Info("app - Run - signal: " + s.String())
 	case err = <-httpServer.Notify():
 		l.Error(fmt.Errorf("app - Run - httpServer.Notify: %w", err))
+	case err = <-grpcServer.Notify():
+		l.Error(fmt.Errorf("app - Run - grpcServer.Notify: %w", err))
 	}
 
 	// Shutdown
-	l.Debug("Server shutdown")
-
 	err = httpServer.Shutdown()
 	if err != nil {
 		l.Error(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
+	}
+
+	err = grpcServer.Shutdown()
+	if err != nil {
+		l.Error(fmt.Errorf("app - Run - grpcServer.Shutdown: %w", err))
 	}
 }

@@ -65,12 +65,12 @@ func (d *Digitiser) Max() int {
 	return d.maxInt
 }
 
-func (d *Digitiser) length() int {
+func (d *Digitiser) Length() int {
 	return d.strLen
 }
 
 func (d *Digitiser) Digit(s string) (id int, err error) {
-	if len(s) > d.length() {
+	if len(s) > d.Length() {
 		err = fmt.Errorf("string exceeds the maximum allowed value(%v)", d.maxInt)
 		return
 	}

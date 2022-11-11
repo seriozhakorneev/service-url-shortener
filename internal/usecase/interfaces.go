@@ -14,6 +14,7 @@ type (
 		Digit(string) (int, error)
 		String(int) (string, error)
 		Max() int
+		Length() int
 	}
 
 	// UrlsRepo -.
