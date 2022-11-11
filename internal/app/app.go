@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -45,8 +44,6 @@ func Run(cfg *config.Config) {
 		fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port),
 	)
 
-	// TODO logs like gin when calls
-
 	// GRPC Server
 	grpcSer := grpc.NewServer()
 	grpcroutes.NewRouter(grpcSer, l, shortenerUseCase)
@@ -60,7 +57,6 @@ func Run(cfg *config.Config) {
 	handler := gin.New()
 	http.NewRouter(handler, l, shortenerUseCase)
 
-	log.Printf("swagger docs on  http://localhost:%v/swagger/index.html", cfg.HTTP.Port)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal

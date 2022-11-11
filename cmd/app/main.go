@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+
 	"service-url-shortener/config"
 	"service-url-shortener/internal/app"
 )

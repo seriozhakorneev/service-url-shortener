@@ -21,19 +21,23 @@ func newRedirectRoute(handler *gin.Engine, t usecase.Shortener, l logger.Interfa
 	handler.GET("/*any", r.get)
 }
 
-// TODO DOCS :
+// get redirects to original url hidden under /<url string identifier>
 func (r *redirectRoutes) get(c *gin.Context) {
+
 	URL, err := r.t.Lengthen(c.Request.Context(), c.Request.RequestURI)
+
 	if err != nil {
-		if errors.Is(err, internal.ErrNotFoundURL) {
-			errorResponse(c, http.StatusNotFound, err.Error())
-
+		switch {
+		case errors.Is(err, internal.ErrImpossibleShortURL):
+			errorResponse(c, http.StatusBadRequest, err.Error())
 			return
+		case errors.Is(err, internal.ErrNotFoundURL):
+			errorResponse(c, http.StatusNotFound, err.Error())
+			return
+		default:
+			r.l.Error(err, "http - v1 - get")
+			errorResponse(c, http.StatusInternalServerError, "shortener service problems")
 		}
-		r.l.Error(err, "http - v1 - get")
-		errorResponse(c, http.StatusInternalServerError, "shortener service problems")
-
-		return
 	}
 
 	c.Redirect(http.StatusSeeOther, URL)

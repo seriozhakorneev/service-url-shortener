@@ -52,7 +52,7 @@ func (s *shortenerRoutes) Get(ctx context.Context, request *pb.ShortenerData) (*
 	original, err := s.t.Lengthen(ctx, request.URL)
 	if err != nil {
 		switch {
-		case errors.Is(err, internal.ErrLengthTooHigh):
+		case errors.Is(err, internal.ErrImpossibleShortURL):
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		case errors.Is(err, internal.ErrNotFoundURL):
 			return nil, status.Error(codes.NotFound, err.Error())
