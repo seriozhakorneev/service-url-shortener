@@ -277,21 +277,72 @@ func TestShortenerUseCase_Shorten_Result(t *testing.T) {
 }
 
 func TestShortenerUseCase_Lengthen(t *testing.T) {
+	testURL := "https://google.com/test"
 	tests := []struct {
 		expectedErr error
 		usecase     Shortener
 	}{
 		{
 			expectedErr: internal.ErrImpossibleShortURL,
+
 			usecase: &ShortenerUseCase{
 				digitiser: mocks.MockDigitiser{},
+			},
+		},
+		{
+			expectedErr: fmt.Errorf(
+				"ShortenerUseCase - Lengthen - uc.digitiser.Digit: %w",
+				errors.New("uc.digitiser.Digit error")),
+
+			usecase: &ShortenerUseCase{
+				digitiser: mocks.MockDigitiser{
+					DigitFunc: func(s string) (int, error) {
+						return 0, errors.New("uc.digitiser.Digit error")
+					},
+					LengthFunc: func() int {
+						return len(testURL) + 1
+					},
+				},
+			},
+		},
+		{
+			expectedErr: fmt.Errorf(
+				"ShortenerUseCase - Lengthen - uc.repo.GetURL: %w",
+				errors.New("uc.repo.GetURL error")),
+
+			usecase: &ShortenerUseCase{
+				repo: mocks.MockUrlsRepo{
+					GetURLFunc: func(ctx context.Context, i int) (string, error) {
+						return "", errors.New("uc.repo.GetURL error")
+					},
+				},
+				digitiser: mocks.MockDigitiser{
+					LengthFunc: func() int {
+						return len(testURL) + 1
+					},
+				},
+			},
+		},
+		{
+			expectedErr: internal.ErrNotFoundURL,
+
+			usecase: &ShortenerUseCase{
+				repo: mocks.MockUrlsRepo{
+					GetURLFunc: func(ctx context.Context, i int) (string, error) {
+						return "", internal.ErrNotFoundURL
+					},
+				},
+				digitiser: mocks.MockDigitiser{
+					LengthFunc: func() int {
+						return len(testURL) + 1
+					},
+				},
 			},
 		},
 	}
 
 	for testNum, test := range tests {
-
-		original, err := test.usecase.Lengthen(context.Background(), "https://google.com/test")
+		original, err := test.usecase.Lengthen(context.Background(), testURL)
 		if original != "" {
 			t.Fatalf("Expected empty string(original), Got: %s", original)
 		}
@@ -299,4 +350,31 @@ func TestShortenerUseCase_Lengthen(t *testing.T) {
 			t.Fatalf("Test: %d\nExpected err: %s\nGot: %s", testNum, test.expectedErr, err)
 		}
 	}
+}
+
+func TestShortenerUseCase_Lengthen_Result(t *testing.T) {
+	testURL := "https://google.com/test"
+	expectedResult := "success"
+
+	usecase := &ShortenerUseCase{
+		repo: mocks.MockUrlsRepo{
+			GetURLFunc: func(ctx context.Context, i int) (string, error) {
+				return expectedResult, nil
+			},
+		},
+		digitiser: mocks.MockDigitiser{
+			LengthFunc: func() int {
+				return len(testURL) + 1
+			},
+		},
+	}
+
+	result, err := usecase.Lengthen(context.Background(), testURL)
+	if err != nil {
+		t.Fatalf("Unexpected error in test: %s", err)
+	}
+	if result != expectedResult {
+		t.Fatalf("Expected result: %s\nGot: %s", expectedResult, result)
+	}
+
 }
