@@ -1,6 +1,8 @@
 package mocks
 
-import "context"
+import (
+	"context"
+)
 
 type MockDigitiser struct {
 	DigitFunc  func(s string) (int, error)
@@ -25,7 +27,7 @@ func (m MockDigitiser) String(i int) (string, error) {
 
 func (m MockDigitiser) Max() int {
 	if m.MaxFunc != nil {
-		return m.Max()
+		return m.MaxFunc()
 	}
 	return 0
 }
@@ -83,7 +85,7 @@ func (m MockUrlsRepo) Touch(ctx context.Context, i int) error {
 
 func (m MockUrlsRepo) Count(ctx context.Context) (int, error) {
 	if m.CountFunc != nil {
-		return m.Count(ctx)
+		return m.CountFunc(ctx)
 	}
 	return 0, nil
 }
