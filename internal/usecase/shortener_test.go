@@ -69,7 +69,6 @@ func TestShortenerUseCase_Shorten_Errors_exist(t *testing.T) {
 				},
 			},
 		},
-
 		{
 			expectedErr: fmt.Errorf(
 				"ShortenerUseCase - Shorten - %w",
@@ -269,11 +268,9 @@ func TestShortenerUseCase_Shorten_Result(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unexpected error in test: %s", err)
 	}
-
 	if result != expectedResult {
 		t.Fatalf("Expected result: %s, Got: %s", result, expectedResult)
 	}
-
 }
 
 func TestShortenerUseCase_Lengthen(t *testing.T) {
@@ -376,5 +373,4 @@ func TestShortenerUseCase_Lengthen_Result(t *testing.T) {
 	if result != expectedResult {
 		t.Fatalf("Expected result: %s\nGot: %s", expectedResult, result)
 	}
-
 }

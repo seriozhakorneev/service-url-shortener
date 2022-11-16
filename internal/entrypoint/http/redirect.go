@@ -23,9 +23,7 @@ func newRedirectRoute(handler *gin.Engine, t usecase.Shortener, l logger.Interfa
 
 // get redirects to original url hidden under /<url string identifier>
 func (r *redirectRoutes) get(c *gin.Context) {
-
 	URL, err := r.t.Lengthen(c.Request.Context(), c.Request.RequestURI)
-
 	if err != nil {
 		switch {
 		case errors.Is(err, internal.ErrImpossibleShortURL):
