@@ -1,31 +1,35 @@
 package integration_test
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
 	. "github.com/Eun/go-hit"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
+
+	pb "service-url-shortener/internal/entrypoint/grpc/shortener_proto"
 )
 
 const (
-	//host       = "app:8080"
-	host = "localhost:8080"
+	container = "app"
 
 	// HTTP
-	basePath = "http://" + host
+	//host     = container + ":8080"
+	basePath = "http://" + container + ":8080"
 
-	// RabbitMQ RPC
-	rmqURL            = "amqp://guest:guest@rabbitmq:5672/"
-	rpcServerExchange = "rpc_server"
-	rpcClientExchange = "rpc_client"
-	requests          = 10
+	// GRPC
+	serverAddr = container + ":50051"
 )
 
 // HTTP GET: /.
 func TestHTTPRedirectGet(t *testing.T) {
 	Test(t,
 		Description("Redirect Get"),
-		Get(basePath+"/<testlink>"),
+		Get(basePath+"/testlink"),
 		Expect().Status().Equal(http.StatusBadRequest),
 		Expect().Body().JSON().JQ(".error").Equal(
 			"provided short URL too long or "+
@@ -34,41 +38,39 @@ func TestHTTPRedirectGet(t *testing.T) {
 	)
 }
 
-// RabbitMQ RPC Client: getHistory.
-//func TestRMQClientRPC(t *testing.T) {
-//	rmqClient, err := client.New(rmqURL, rpcServerExchange, rpcClientExchange)
-//	if err != nil {
-//		t.Fatal("RabbitMQ RPC Client - init error - client.New")
-//	}
-//
-//	defer func() {
-//		err = rmqClient.Shutdown()
-//		if err != nil {
-//			t.Fatal("RabbitMQ RPC Client - shutdown error - rmqClient.RemoteCall", err)
-//		}
-//	}()
-//
-//	type Translation struct {
-//		Source      string `json:"source"`
-//		Destination string `json:"destination"`
-//		Original    string `json:"original"`
-//		Translation string `json:"translation"`
-//	}
-//
-//	type historyResponse struct {
-//		History []Translation `json:"history"`
-//	}
-//
-//	for i := 0; i < requests; i++ {
-//		var history historyResponse
-//
-//		err = rmqClient.RemoteCall("getHistory", nil, &history)
-//		if err != nil {
-//			t.Fatal("RabbitMQ RPC Client - remote call error - rmqClient.RemoteCall", err)
-//		}
-//
-//		if history.History[0].Original != "текст для перевода" {
-//			t.Fatal("Original != текст для перевода")
-//		}
-//	}
-//}
+// GRPC: Shortener.
+func TestGRPCShortener(t *testing.T) {
+	conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("GRPC client - grpc.Dial: %v", err)
+	}
+	defer func() {
+		err = conn.Close()
+		if err != nil {
+			t.Fatal("GRPC client - conn.Close()", err)
+		}
+	}()
+
+	data := &pb.ShortenerData{URL: "not_valid_url"}
+	expectedStatus := codes.InvalidArgument
+
+	client := pb.NewShortenerClient(conn)
+
+	result, err := client.Create(context.Background(), data)
+	code := status.Code(err)
+	if result != nil {
+		t.Fatalf("Expected nil in Get result, Got: %v", result)
+	}
+	if code != expectedStatus {
+		t.Fatalf("Expected status code in Create: %s, Got: %s", expectedStatus, code)
+	}
+
+	result, err = client.Get(context.Background(), data)
+	code = status.Code(err)
+	if result != nil {
+		t.Fatalf("Expected nil in Get result, Got: %v", result)
+	}
+	if code != expectedStatus {
+		t.Fatalf("Expected status code in Get: %s, Got: %s", expectedStatus, code)
+	}
+}

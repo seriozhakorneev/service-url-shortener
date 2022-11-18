@@ -41,7 +41,7 @@ type (
 
 	GRPC struct {
 		Network string `env-required:"true" yaml:"network" env:"GRPC_NETWORK"`
-		Port    int    `env-required:"true" yaml:"port" env:"GRPC_PORT"`
+		Port    string `env-required:"true" yaml:"port" env:"GRPC_PORT"`
 	}
 
 	// Digitiser -.

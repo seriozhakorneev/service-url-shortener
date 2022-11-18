@@ -19,6 +19,7 @@ services:
     image: app
     environment:
       PG_URL: 'postgres://user:pass@postgres:5432/postgres'
+      GRPC_DEBUG: 'true'
     ports:
       - 8080:8080
     depends_on:
