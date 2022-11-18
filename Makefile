@@ -27,7 +27,7 @@ compose-down: ### Down docker-compose
 
 run: ### app run
 	go mod tidy && go mod download && \
-	GIN_MODE=debug CGO_ENABLED=0 go run -tags migrate ./cmd/app
+	GIN_MODE=debug GRPC_DEBUG=true CGO_ENABLED=0 go run -tags migrate ./cmd/app
 .PHONY: run
 
 docker-rm-volume: ### remove docker volume

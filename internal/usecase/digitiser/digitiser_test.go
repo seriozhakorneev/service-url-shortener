@@ -30,7 +30,6 @@ func TestMain(m *testing.M) {
 	err = d.countMax(length)
 	if err != nil {
 		log.Fatalf("Failed to count Max in test: %s", err)
-
 	}
 
 	base, max = d.base(), d.Max()
