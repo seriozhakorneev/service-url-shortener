@@ -33,7 +33,11 @@ func Run(cfg *config.Config) {
 	defer pg.Close()
 
 	// Use Case
-	d, err := digitiser.New(cfg.Digitiser.Base, cfg.Digitiser.Length)
+	d, err := digitiser.New(
+		cfg.Digitiser.Base,
+		cfg.Digitiser.Length,
+		cfg.Digitiser.MaxRepoInt,
+	)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - digitiser.NewShortener: %w", err))
 	}

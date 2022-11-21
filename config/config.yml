@@ -18,6 +18,7 @@ grpc:
 digitiser:
   # sensitive values, changes can lead to maximum allowable integer errors
   # in code or storage, check digitiser.Max()
+  max_repo_int: 2147483647 # postgres_max_int
   base: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
   length: 5
 

@@ -12,7 +12,7 @@ type Digitiser struct {
 	maxInt, strLen int
 }
 
-func New(digits string, length int) (d Digitiser, err error) {
+func New(digits string, length, maxRepoInt int) (d Digitiser, err error) {
 	d = Digitiser{
 		digBase: len(digits),
 		digits:  digits,
@@ -25,6 +25,17 @@ func New(digits string, length int) (d Digitiser, err error) {
 	}
 
 	_ = d.countMax(length)
+
+	if d.Max() > maxRepoInt {
+		err = fmt.Errorf(
+			"impossible configurations: "+
+				"maximum digit(%d) exceeds maximum repository integer(%d)",
+			d.Max(),
+			maxRepoInt,
+		)
+		return
+	}
+
 	return
 }
 
