@@ -79,7 +79,8 @@ func TestDigitiser_New(t *testing.T) {
 	maxRepo := 10
 	expectedErr = fmt.Errorf(
 		"impossible configurations: "+
-			"maximum digit(%d) exceeds maximum repository integer(%d)",
+			"maximum digit(%d) exceeds maximum repository integer(%d), "+
+			"should shorten length or base",
 		max,
 		maxRepo,
 	)
