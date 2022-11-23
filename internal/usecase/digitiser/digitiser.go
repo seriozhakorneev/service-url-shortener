@@ -26,11 +26,11 @@ func New(digits string, length, maxRepoInt int) (d Digitiser, err error) {
 
 	_ = d.countMax(length)
 
-	if d.Max() > maxRepoInt {
+	if d.maxInt > maxRepoInt {
 		err = fmt.Errorf(
 			"impossible configurations: "+
 				"maximum digit(%d) exceeds maximum repository integer(%d)",
-			d.Max(),
+			d.maxInt,
 			maxRepoInt,
 		)
 		return
