@@ -34,6 +34,7 @@ func (uc *ShortenerUseCase) exist(ctx context.Context, URL string) (string, erro
 		if errors.Is(err, internal.ErrNotFoundURL) {
 			return "", err
 		}
+
 		return "", fmt.Errorf("exist - uc.repo.GetID: %w", err)
 	}
 
@@ -109,6 +110,7 @@ func (uc *ShortenerUseCase) Lengthen(ctx context.Context, shortURL string) (stri
 		if errors.Is(err, internal.ErrNotFoundURL) {
 			return "", err
 		}
+
 		return "", fmt.Errorf("ShortenerUseCase - Lengthen - uc.repo.GetURL: %w", err)
 	}
 

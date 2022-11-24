@@ -15,7 +15,6 @@ func validateURL(u string) error {
 	r := regexp.MustCompile(Regexp)
 	if !r.MatchString(u) {
 		return fmt.Errorf("required field 'URL'(%s) not matching a valid URL", u)
-
 	}
 
 	return nil

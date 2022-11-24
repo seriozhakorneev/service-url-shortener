@@ -61,20 +61,15 @@ linters:
     - depguard
     - dogsled
     - durationcheck
-    - errcheck
     - errorlint
     - exhaustive
     - exportloopref
     - forbidigo
-    - funlen
-    - gochecknoglobals
     - gochecknoinits
     - gocognit
     - goconst
-    - gocritic
     - gocyclo
     - godox
-    - goerr113
     - gofmt
     - goimports
     - gomnd
@@ -85,10 +80,8 @@ linters:
     - govet
     - ineffassign
     - makezero
-    - misspell
     - nakedret
     - nestif
-    - nlreturn
     - noctx
     - nolintlint
     - paralleltest
@@ -106,6 +99,13 @@ linters:
     - whitespace
 
 # disable:
+#    - gocritic
+#    - errcheck
+#    - nlreturn
+#    - misspell
+#    - goerr113
+#    - funlen
+#    - gochecknoglobals
 #    - exhaustivestruct
 #    - ifshort
 #    - goheader

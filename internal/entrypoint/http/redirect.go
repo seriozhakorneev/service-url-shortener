@@ -28,9 +28,11 @@ func (r *redirectRoutes) get(c *gin.Context) {
 		switch {
 		case errors.Is(err, internal.ErrImpossibleShortURL):
 			errorResponse(c, http.StatusBadRequest, err.Error())
+
 			return
 		case errors.Is(err, internal.ErrNotFoundURL):
 			errorResponse(c, http.StatusNotFound, err.Error())
+
 			return
 		default:
 			r.l.Error(err, "http - v1 - get")

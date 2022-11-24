@@ -33,7 +33,7 @@ type Server struct {
 }
 
 // New -.
-func New(server *grpc.Server, network string, port string, l logger.Interface, opts ...Option) (*Server, error) {
+func New(server *grpc.Server, network, port string, l logger.Interface, opts ...Option) (*Server, error) {
 	lis, err := net.Listen(network, net.JoinHostPort("", port))
 	if err != nil {
 		return nil, fmt.Errorf("grpc server - NewServer - net.Listen: %w", err)
@@ -75,6 +75,7 @@ func (s *Server) debugMessage() {
 				method.IsClientStream,
 			)
 		}
+
 		fmt.Fprintln(defaultWriter)
 	}
 }
@@ -103,6 +104,8 @@ func (s *Server) Shutdown() error {
 	if err != nil {
 		return fmt.Errorf("grpc server - Server - Shutdown - s.listener.Close: %w", err)
 	}
+
 	s.server.GracefulStop()
+
 	return nil
 }

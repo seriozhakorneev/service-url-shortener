@@ -7,8 +7,6 @@ import (
 	"service-url-shortener/pkg/logger"
 )
 
-//  TODO DOCS :
-
 func NewRouter(handler *gin.Engine, l logger.Interface, t usecase.Shortener) {
 	// Options
 	handler.Use(gin.Logger())
