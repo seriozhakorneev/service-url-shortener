@@ -11,7 +11,14 @@ import (
 	"service-url-shortener/internal/usecase/mocks"
 )
 
+const (
+	expectedResult = "success"
+	testURL        = "https://google.com/test"
+)
+
 func TestNewShortener(t *testing.T) {
+	t.Parallel()
+
 	repo := mocks.MockUrlsRepo{}
 	digitiser := mocks.MockDigitiser{}
 	blank := "testblank"
@@ -29,6 +36,8 @@ func TestNewShortener(t *testing.T) {
 }
 
 func TestShortenerUseCase_Shorten_Errors_exist(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		expectedErr error
 		usecase     Shortener
@@ -98,6 +107,7 @@ func TestShortenerUseCase_Shorten_Errors_exist(t *testing.T) {
 		if short != "" {
 			t.Fatalf("Expected empty string(short), Got: %s", short)
 		}
+
 		if !reflect.DeepEqual(err, test.expectedErr) {
 			t.Fatalf("Test: %d\nExpected err: %s\nGot: %s", testNum, test.expectedErr, err)
 		}
@@ -105,7 +115,9 @@ func TestShortenerUseCase_Shorten_Errors_exist(t *testing.T) {
 }
 
 func TestShortenerUseCase_Shorten_Result_exist(t *testing.T) {
-	expectedResult := "test_short"
+	t.Parallel()
+
+	exResult := "test_short"
 
 	usecase := &ShortenerUseCase{
 		repo: mocks.MockUrlsRepo{
@@ -118,7 +130,7 @@ func TestShortenerUseCase_Shorten_Result_exist(t *testing.T) {
 		},
 		digitiser: mocks.MockDigitiser{
 			StringFunc: func(i int) (string, error) {
-				return expectedResult, nil
+				return exResult, nil
 			},
 		},
 	}
@@ -127,12 +139,15 @@ func TestShortenerUseCase_Shorten_Result_exist(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unexpected error in test: %s", err)
 	}
-	if result != expectedResult {
-		t.Fatalf("Expected result: %s\nGot: %s", expectedResult, result)
+
+	if result != exResult {
+		t.Fatalf("Expected result: %s\nGot: %s", exResult, result)
 	}
 }
 
 func TestShortenerUseCase_Shorten_Errors(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		expectedErr error
 		usecase     Shortener
@@ -233,6 +248,7 @@ func TestShortenerUseCase_Shorten_Errors(t *testing.T) {
 		if short != "" {
 			t.Fatalf("Expected empty string(short), Got: %s", short)
 		}
+
 		if !reflect.DeepEqual(err, test.expectedErr) {
 			t.Fatalf("Test: %d\nExpected err: %s\nGot: %s", testNum, test.expectedErr, err)
 		}
@@ -240,7 +256,7 @@ func TestShortenerUseCase_Shorten_Errors(t *testing.T) {
 }
 
 func TestShortenerUseCase_Shorten_Result(t *testing.T) {
-	expectedResult := "success"
+	t.Parallel()
 
 	usecase := &ShortenerUseCase{
 		repo: &mocks.MockUrlsRepo{
@@ -268,13 +284,15 @@ func TestShortenerUseCase_Shorten_Result(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unexpected error in test: %s", err)
 	}
+
 	if result != expectedResult {
 		t.Fatalf("Expected result: %s, Got: %s", result, expectedResult)
 	}
 }
 
 func TestShortenerUseCase_Lengthen(t *testing.T) {
-	testURL := "https://google.com/test"
+	t.Parallel()
+
 	tests := []struct {
 		expectedErr error
 		usecase     Shortener
@@ -343,6 +361,7 @@ func TestShortenerUseCase_Lengthen(t *testing.T) {
 		if original != "" {
 			t.Fatalf("Expected empty string(original), Got: %s", original)
 		}
+
 		if !reflect.DeepEqual(err, test.expectedErr) {
 			t.Fatalf("Test: %d\nExpected err: %s\nGot: %s", testNum, test.expectedErr, err)
 		}
@@ -350,6 +369,8 @@ func TestShortenerUseCase_Lengthen(t *testing.T) {
 }
 
 func TestShortenerUseCase_Lengthen_Result(t *testing.T) {
+	t.Parallel()
+
 	testURL := "https://google.com/test"
 	expectedResult := "success"
 
@@ -370,6 +391,7 @@ func TestShortenerUseCase_Lengthen_Result(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unexpected error in test: %s", err)
 	}
+
 	if result != expectedResult {
 		t.Fatalf("Expected result: %s\nGot: %s", expectedResult, result)
 	}

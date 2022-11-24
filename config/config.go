@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
@@ -46,8 +47,9 @@ type (
 
 	// Digitiser -.
 	Digitiser struct {
-		Base   string `yaml:"base"`
-		Length int    `yaml:"length"`
+		MaxRepoInt int    `yaml:"max_repo_int"`
+		Base       string `yaml:"base"`
+		Length     int    `yaml:"length"`
 	}
 
 	// URL -.

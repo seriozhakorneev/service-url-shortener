@@ -12,7 +12,7 @@ type Digitiser struct {
 	maxInt, strLen int
 }
 
-func New(digits string, length int) (d Digitiser, err error) {
+func New(digits string, length, maxRepoInt int) (d Digitiser, err error) {
 	d = Digitiser{
 		digBase: len(digits),
 		digits:  digits,
@@ -20,11 +20,25 @@ func New(digits string, length int) (d Digitiser, err error) {
 	}
 
 	if err = d.makeLookup(); err != nil {
-		err = fmt.Errorf("make lookup failed: %v", err)
+		err = fmt.Errorf("make lookup failed: %w", err)
+
 		return
 	}
 
 	_ = d.countMax(length)
+
+	if d.maxInt > maxRepoInt {
+		err = fmt.Errorf(
+			"impossible configurations: "+
+				"maximum digit(%d) exceeds maximum repository integer(%d), "+
+				"should shorten length or base",
+			d.maxInt,
+			maxRepoInt,
+		)
+
+		return
+	}
+
 	return
 }
 
@@ -36,24 +50,31 @@ func (d *Digitiser) countMax(length int) (err error) {
 
 	maxValue, err := d.digitise(maxStr)
 	if err != nil {
-		err = fmt.Errorf("digitise failed: %v", err)
+		err = fmt.Errorf("digitise failed: %w", err)
+
 		return
 	}
 
 	d.maxInt = maxValue
+
 	return
 }
 
 func (d *Digitiser) makeLookup() (err error) {
 	lookup := make(map[rune]int, 0)
+
 	for i, r := range d.digits {
 		if _, ok := lookup[r]; ok {
 			err = fmt.Errorf("duplicate rune: %v", r)
+
 			return
 		}
+
 		lookup[r] = i
 	}
+
 	d.lookup = lookup
+
 	return
 }
 
@@ -72,12 +93,14 @@ func (d *Digitiser) Length() int {
 func (d *Digitiser) Digit(s string) (id int, err error) {
 	if len(s) > d.Length() {
 		err = fmt.Errorf("string exceeds the maximum allowed value(%v)", d.maxInt)
+
 		return
 	}
 
 	id, err = d.digitise(s)
 	if err != nil {
-		err = fmt.Errorf("digitise failed: %v", err)
+		err = fmt.Errorf("digitise failed: %w", err)
+
 		return
 	}
 
@@ -91,6 +114,7 @@ func (d *Digitiser) digitise(s string) (digit int, err error) {
 			err = fmt.Errorf("rune not found: %v", v)
 			return
 		}
+
 		digit += m * int(math.Pow(float64(d.base()), float64(i)))
 	}
 
@@ -104,31 +128,33 @@ func (d *Digitiser) String(id int) (s string, err error) {
 	}
 
 	var n rune
+
 	for {
 		n, err = d.lookupIndex(id % d.base())
 		if err != nil {
-			err = fmt.Errorf("lookup index failed: %v", err)
+			err = fmt.Errorf("lookup index failed: %w", err)
 			return
 		}
 
 		s += string(n)
 
-		id = id / d.base()
+		id /= d.base()
 		if id <= d.base()-1 {
 			if id != 0 {
 				n, err = d.lookupIndex(id % d.base())
 				if err != nil {
-					err = fmt.Errorf("lookup index failed: %v", err)
+					err = fmt.Errorf("lookup index failed: %w", err)
 					return
 				}
 
 				s += string(n)
 			}
+
 			break
 		}
 	}
 
-	return
+	return s, nil
 }
 
 func (d *Digitiser) lookupIndex(i int) (rune, error) {

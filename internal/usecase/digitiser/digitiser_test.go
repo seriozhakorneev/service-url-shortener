@@ -11,8 +11,9 @@ import (
 
 const (
 	// changing this parameters will affect tests performance
-	length = 5
-	digits = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+	length         = 5
+	postgresMaxInt = 2147483647
+	digits         = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 )
 
 var (
@@ -54,9 +55,9 @@ func TestDigitiser_New(t *testing.T) {
 		t.Fatal("make lookup failed in testing:", err)
 	}
 
-	result, err := New(digits, length)
+	result, err := New(digits, length, postgresMaxInt)
 	if err != nil {
-		t.Fatal("new failed in testing:", err)
+		t.Fatal("unexpected failed new in testing:", err)
 	}
 
 	if !reflect.DeepEqual(expected, result) {
@@ -64,15 +65,32 @@ func TestDigitiser_New(t *testing.T) {
 	}
 
 	duplicateDigits := "AA"
-	expectedErr := fmt.Errorf("make lookup failed: duplicate rune: %d", duplicateDigits[0])
+	expectedErr := fmt.Errorf("make lookup failed: %w",
+		fmt.Errorf("duplicate rune: %d", duplicateDigits[0]))
+
 	expectedRes := Digitiser{digBase: 2, digits: duplicateDigits}
-	result, err = New(duplicateDigits, 0)
+	result, err = New(duplicateDigits, 0, postgresMaxInt)
 
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
+
 	if !reflect.DeepEqual(expectedRes, result) {
 		t.Fatalf("expected err: %v, got: %v", expectedRes, result)
+	}
+
+	maxRepo := 10
+	expectedErr = fmt.Errorf(
+		"impossible configurations: "+
+			"maximum digit(%d) exceeds maximum repository integer(%d), "+
+			"should shorten length or base",
+		max,
+		maxRepo,
+	)
+
+	_, err = New(digits, length, maxRepo)
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Fatalf("Expected error: %s\nGot:%s", expectedErr, err)
 	}
 }
 
@@ -80,11 +98,12 @@ func TestDigitiser_countMax(t *testing.T) {
 	t.Parallel()
 
 	d := Digitiser{digits: digits, digBase: len(digits)}
-	expectedErr := fmt.Errorf("digitise failed: rune not found: %v", digits[len(digits)-1])
+	expectedErr := fmt.Errorf("digitise failed: %w",
+		fmt.Errorf("rune not found: %v", digits[len(digits)-1]))
 
 	err := d.countMax(length)
 	if !reflect.DeepEqual(expectedErr, err) {
-		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
+		t.Fatalf("expected err: %v\ngot: %v", expectedErr, err)
 	}
 
 	err = d.makeLookup()
@@ -124,27 +143,29 @@ func TestDigitiser_makeLookup(t *testing.T) {
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected error: %v, got: %v", expectedErr, err)
 	}
-
 }
 
 func TestDigitiser_NewID_Errors(t *testing.T) {
 	t.Parallel()
 
-	d, err := New(digits, length)
+	d, err := New(digits, length, postgresMaxInt)
 	if err != nil {
 		t.Fatal("new digitiser failed in testing:", err)
 	}
 
 	expectedErr := fmt.Errorf("string exceeds the maximum allowed value(%v)", d.maxInt)
 	_, err = d.Digit("Heelloo8")
+
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
 
-	expectedErr = fmt.Errorf("digitise failed: rune not found: %v", '&')
+	expectedErr = fmt.Errorf("digitise failed: %w",
+		fmt.Errorf("rune not found: %v", '&'))
+
 	_, err = d.Digit("Hell&")
 	if !reflect.DeepEqual(expectedErr, err) {
-		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
+		t.Fatalf("expected err: %v\ngot: %v", expectedErr, err)
 	}
 }
 
@@ -160,6 +181,7 @@ func TestDigitiser_LookupIndex(t *testing.T) {
 	}
 
 	expectedErr := fmt.Errorf("index out of range: %v", 1)
+
 	_, err := d.lookupIndex(1)
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
@@ -169,19 +191,21 @@ func TestDigitiser_LookupIndex(t *testing.T) {
 func TestDigitiser_NewString(t *testing.T) {
 	t.Parallel()
 
-	d, err := New(digits, length)
+	d, err := New(digits, length, postgresMaxInt)
 	if err != nil {
 		t.Fatal("new digitiser failed in testing:", err)
 	}
 
 	expectedErr := fmt.Errorf("digit exceeds the maximum:(%v)", d.Max())
+
 	_, err = d.String(d.Max() + 1)
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
 
 	d.lookup = nil
-	expectedErr = fmt.Errorf("lookup index failed: %v", fmt.Errorf("index out of range: %v", 0))
+	expectedErr = fmt.Errorf("lookup index failed: %w", fmt.Errorf("index out of range: %v", 0))
+
 	_, err = d.String(0)
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
@@ -198,7 +222,7 @@ func TestDigitiser_Results(t *testing.T) {
 	)
 
 	for i := 1; i <= length; i++ {
-		d, err = New(digits, i)
+		d, err = New(digits, i, postgresMaxInt)
 		if err != nil {
 			t.Fatal("new digitiser failed in testing:", err)
 		}
@@ -211,6 +235,7 @@ func TestDigitiser_Results(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			err = testID(&d, till)
 			if err != nil {
 				t.Fatal(err)
@@ -222,16 +247,17 @@ func TestDigitiser_Results(t *testing.T) {
 func testID(d *Digitiser, expected int) error {
 	str, err := d.String(expected)
 	if err != nil {
-		return fmt.Errorf("new string failed in testing: %v, id(%v)", err, expected)
+		return fmt.Errorf("new string failed in testing: %w, id(%v)", err, expected)
 	}
 
 	result, err := d.Digit(str)
 	if err != nil {
-		return fmt.Errorf("new id failed in testing: %v, id(%v)", err, expected)
+		return fmt.Errorf("new id failed in testing: %w, id(%v)", err, expected)
 	}
 
 	if expected != result {
 		return fmt.Errorf("expected id: %v, got: %v, string: '%s'", expected, result, str)
 	}
+
 	return nil
 }

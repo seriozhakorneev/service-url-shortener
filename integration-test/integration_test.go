@@ -18,7 +18,6 @@ const (
 	container = "app"
 
 	// HTTP
-	//host     = container + ":8080"
 	basePath = "http://" + container + ":8080"
 
 	// GRPC
@@ -44,6 +43,7 @@ func TestGRPCShortener(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GRPC client - grpc.Dial: %v", err)
 	}
+
 	defer func() {
 		err = conn.Close()
 		if err != nil {
@@ -57,19 +57,22 @@ func TestGRPCShortener(t *testing.T) {
 	client := pb.NewShortenerClient(conn)
 
 	result, err := client.Create(context.Background(), data)
-	code := status.Code(err)
 	if result != nil {
 		t.Fatalf("Expected nil in Get result, Got: %v", result)
 	}
+
+	code := status.Code(err)
 	if code != expectedStatus {
 		t.Fatalf("Expected status code in Create: %s, Got: %s", expectedStatus, code)
 	}
 
 	result, err = client.Get(context.Background(), data)
-	code = status.Code(err)
 	if result != nil {
 		t.Fatalf("Expected nil in Get result, Got: %v", result)
 	}
+
+	code = status.Code(err)
+
 	if code != expectedStatus {
 		t.Fatalf("Expected status code in Get: %s, Got: %s", expectedStatus, code)
 	}

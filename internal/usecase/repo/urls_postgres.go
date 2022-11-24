@@ -30,6 +30,7 @@ func (r *UrlsRepo) Count(ctx context.Context) (value int, err error) {
 	).Scan(&value)
 	if err != nil {
 		err = fmt.Errorf("UrlsRepo - Count - r.Pool.QueryRow.Scan: %w", err)
+
 		return
 	}
 
@@ -37,17 +38,19 @@ func (r *UrlsRepo) Count(ctx context.Context) (value int, err error) {
 }
 
 // GetID -.
-func (r *UrlsRepo) GetID(ctx context.Context, URL string) (int, error) {
+func (r *UrlsRepo) GetID(ctx context.Context, url string) (int, error) {
 	var id int
+
 	err := r.Pool.QueryRow(
 		ctx,
 		`SELECT id FROM urls WHERE original = $1`,
-		URL,
+		url,
 	).Scan(&id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return 0, internal.ErrNotFoundURL
 		}
+
 		return 0, fmt.Errorf("UrlsRepo - GetID - r.Pool.QueryRow.Scan: %w", err)
 	}
 
@@ -64,9 +67,12 @@ func (r *UrlsRepo) GetURL(ctx context.Context, id int) (original string, err err
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = internal.ErrNotFoundURL
+
 			return
 		}
+
 		err = fmt.Errorf("UrlsRepo - GetURL - r.Pool.QueryRow.Scan: %w", err)
+
 		return
 	}
 
@@ -82,12 +88,14 @@ func (r *UrlsRepo) Touch(ctx context.Context, id int) (err error) {
 	)
 	if err != nil {
 		err = fmt.Errorf("UrlsRepo - Touch - r.Pool.Exec: %w", err)
+
 		return
 	}
 
 	if pg.RowsAffected() <= 0 {
 		err = fmt.Errorf("UrlsRepo - Touch - pg.RowsAffected: %s",
 			"rows not affected by sql execution")
+
 		return
 	}
 
@@ -95,7 +103,7 @@ func (r *UrlsRepo) Touch(ctx context.Context, id int) (err error) {
 }
 
 // Rewrite -.
-func (r *UrlsRepo) Rewrite(ctx context.Context, URL string) (id int, err error) {
+func (r *UrlsRepo) Rewrite(ctx context.Context, url string) (id int, err error) {
 	err = r.Pool.QueryRow(
 		ctx,
 		`UPDATE urls
@@ -106,21 +114,23 @@ func (r *UrlsRepo) Rewrite(ctx context.Context, URL string) (id int, err error) 
             		FROM urls
             	)
             RETURNING id;`,
-		time.Now(), URL,
+		time.Now(), url,
 	).Scan(&id)
 	if err != nil {
 		err = fmt.Errorf("UrlsRepo - Rewrite - r.Pool.QueryRow.Scan: %w", err)
+
 		return
 	}
+
 	return
 }
 
 // Create -.
-func (r *UrlsRepo) Create(ctx context.Context, URL string) (id int, err error) {
+func (r *UrlsRepo) Create(ctx context.Context, url string) (id int, err error) {
 	err = r.Pool.QueryRow(
 		ctx,
 		`INSERT INTO urls (original,touched) VALUES($1, $2) RETURNING id;`,
-		URL, time.Now(),
+		url, time.Now(),
 	).Scan(&id)
 	if err != nil {
 		err = fmt.Errorf("UrlsRepo - Create - r.Pool.QueryRow.Scan: %w", err)

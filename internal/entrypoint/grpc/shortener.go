@@ -36,6 +36,7 @@ func (s *shortenerRoutes) Create(ctx context.Context, request *pb.ShortenerData)
 	short, err := s.t.Shorten(ctx, request.URL)
 	if err != nil {
 		s.l.Error(err, "grpc - Shortener - Create")
+
 		return nil, status.Error(codes.Internal, "shortener service problems")
 	}
 
@@ -58,6 +59,7 @@ func (s *shortenerRoutes) Get(ctx context.Context, request *pb.ShortenerData) (*
 			return nil, status.Error(codes.NotFound, err.Error())
 		default:
 			s.l.Error(err, "grpc - Shortener - Get")
+
 			return nil, status.Error(codes.Internal, "shortener service problems")
 		}
 	}

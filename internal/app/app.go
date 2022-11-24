@@ -33,7 +33,11 @@ func Run(cfg *config.Config) {
 	defer pg.Close()
 
 	// Use Case
-	d, err := digitiser.New(cfg.Digitiser.Base, cfg.Digitiser.Length)
+	d, err := digitiser.New(
+		cfg.Digitiser.Base,
+		cfg.Digitiser.Length,
+		cfg.Digitiser.MaxRepoInt,
+	)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - digitiser.NewShortener: %w", err))
 	}
@@ -56,7 +60,6 @@ func Run(cfg *config.Config) {
 	// HTTP Server
 	handler := gin.New()
 	http.NewRouter(handler, l, shortenerUseCase)
-
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal
