@@ -27,6 +27,6 @@ $ make compose-up-integration-test
 ```
 
 ### Usage:
-GRPC endpoint described in [proto](https://github.com/seriozhakorneev/service-url-shortener/blob/main/internal/entrypoint/grpc/shortener_proto/shortener.proto).
+GRPC endpoints described in [proto](https://github.com/seriozhakorneev/service-url-shortener/blob/main/internal/entrypoint/grpc/shortener_proto/shortener.proto).
 
 HTTP redirect can be used by following the short URL provided by GRPC Shortener.Create response.
