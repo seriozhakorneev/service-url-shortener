@@ -66,6 +66,7 @@ func Run(cfg *config.Config) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
+httpContinue:
 	select {
 	case s := <-interrupt:
 		l.Info("app - Run - signal: " + s.String())
@@ -73,6 +74,13 @@ func Run(cfg *config.Config) {
 		l.Error(fmt.Errorf("app - Run - httpServer.Notify: %w", err))
 	case err = <-grpcServer.Notify():
 		l.Error(fmt.Errorf("app - Run - grpcServer.Notify: %w", err))
+
+		// GRPC shutdown
+		err = grpcServer.Shutdown()
+		if err != nil {
+			l.Error(fmt.Errorf("app - Run - grpcServer.Shutdown: %w", err))
+		}
+		goto httpContinue
 	}
 
 	// Shutdown

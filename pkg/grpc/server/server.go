@@ -94,10 +94,8 @@ func (s *Server) Notify() <-chan error {
 
 // Shutdown -.
 func (s *Server) Shutdown() error {
-	select {
-	case <-s.notify:
+	if s.notify == nil {
 		return nil
-	default:
 	}
 
 	err := s.listener.Close()
@@ -106,6 +104,7 @@ func (s *Server) Shutdown() error {
 	}
 
 	s.server.GracefulStop()
+	s.notify = nil
 
 	return nil
 }
