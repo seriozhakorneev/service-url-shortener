@@ -35,7 +35,7 @@ func TestNewShortener(t *testing.T) {
 	}
 }
 
-func TestShortenerUseCase_Shorten_Errors_exist(t *testing.T) {
+func TestShortenerUseCaseShortenErrorsExist(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -114,7 +114,7 @@ func TestShortenerUseCase_Shorten_Errors_exist(t *testing.T) {
 	}
 }
 
-func TestShortenerUseCase_Shorten_Result_exist(t *testing.T) {
+func TestShortenerUseCaseShortenResultExist(t *testing.T) {
 	t.Parallel()
 
 	exResult := "test_short"
@@ -145,7 +145,7 @@ func TestShortenerUseCase_Shorten_Result_exist(t *testing.T) {
 	}
 }
 
-func TestShortenerUseCase_Shorten_Errors(t *testing.T) {
+func TestShortenerUseCaseShortenErrors(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -255,7 +255,7 @@ func TestShortenerUseCase_Shorten_Errors(t *testing.T) {
 	}
 }
 
-func TestShortenerUseCase_Shorten_Result(t *testing.T) {
+func TestShortenerUseCaseShortenResult(t *testing.T) {
 	t.Parallel()
 
 	usecase := &ShortenerUseCase{
@@ -290,7 +290,7 @@ func TestShortenerUseCase_Shorten_Result(t *testing.T) {
 	}
 }
 
-func TestShortenerUseCase_Lengthen(t *testing.T) {
+func TestShortenerUseCaseLengthen(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -368,7 +368,7 @@ func TestShortenerUseCase_Lengthen(t *testing.T) {
 	}
 }
 
-func TestShortenerUseCase_Lengthen_Result(t *testing.T) {
+func TestShortenerUseCaseLengthenResult(t *testing.T) {
 	t.Parallel()
 
 	testURL := "https://google.com/test"
