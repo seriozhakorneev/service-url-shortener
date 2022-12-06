@@ -40,7 +40,9 @@ func TestMain(m *testing.M) {
 }
 
 func FuzzDigitiserNew(f *testing.F) {
+	f.Add(digits)
 	f.Fuzz(func(t *testing.T, fuzzDigits string) {
+		t.Parallel()
 		expected := Digitiser{
 			digBase: len(fuzzDigits),
 			digits:  fuzzDigits,
@@ -168,7 +170,26 @@ func TestDigitiserMakeLookup(t *testing.T) {
 	}
 }
 
-func TestDigitiserNewIDErrors(t *testing.T) {
+func FuzzDigitiserDigit(f *testing.F) {
+	f.Add("abcd")
+	f.Fuzz(func(t *testing.T, short string) {
+		t.Parallel()
+		digitiser, err := New(digits, length, postgresMaxInt)
+		if err != nil {
+			return
+		}
+
+		id, err := digitiser.Digit(short)
+		if err != nil {
+			return
+		}
+		if id > digitiser.Max() {
+			t.Fatalf("expected result id <= (%d), got: %v", digitiser.Max(), id)
+		}
+	})
+}
+
+func TestDigitiserDigitErrors(t *testing.T) {
 	t.Parallel()
 
 	d, err := New(digits, length, postgresMaxInt)
@@ -211,7 +232,32 @@ func TestDigitiserLookupIndex(t *testing.T) {
 	}
 }
 
-func TestDigitiserNewString(t *testing.T) {
+func FuzzDigitiserString(f *testing.F) {
+	f.Add(224)
+	f.Fuzz(func(t *testing.T, id int) {
+		t.Parallel()
+		digitiser, err := New(digits, length, postgresMaxInt)
+		if err != nil {
+			return
+		}
+
+		short, err := digitiser.String(id)
+		if err != nil {
+			return
+		}
+		if len(short) > length {
+			t.Fatalf("expected short length %d, got: %d", len(short), length)
+		}
+		for _, r := range short {
+			if v, ok := digitiser.lookup[r]; !ok {
+				t.Fatalf("expected r(%d) in lookup, got: %d", r, v)
+			}
+
+		}
+	})
+}
+
+func TestDigitiserString(t *testing.T) {
 	t.Parallel()
 
 	d, err := New(digits, length, postgresMaxInt)
@@ -235,7 +281,7 @@ func TestDigitiserNewString(t *testing.T) {
 	}
 }
 
-func TestDigitiserResults(t *testing.T) {
+func TestDigitiser_Results(t *testing.T) {
 	t.Parallel()
 
 	var (
