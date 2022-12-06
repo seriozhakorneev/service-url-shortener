@@ -6,7 +6,7 @@ The service can create shortened URLs, return original URLs (using GRPC).
 Redirect to the original URL when follow the short one (using HTTP).
 
 
-- Shortener usecase, Digitiser package, Mocks & Unit-Tests.
+- Shortener usecase, Digitiser usecase, Mocks & Unit-Tests && Fuzz Testing.
 - Shortener GRPC service, Redirect HTTP & Integration-Tests.
 - Postgres repository, Migrations.
 - Simplified GRPC server, request Logger.

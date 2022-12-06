@@ -95,10 +95,10 @@ linters:
     - unconvert
     - unparam
     - unused
-    - wsl
     - whitespace
 
 # disable:
+#    - wsl
 #    - gocritic
 #    - errcheck
 #    - nlreturn
