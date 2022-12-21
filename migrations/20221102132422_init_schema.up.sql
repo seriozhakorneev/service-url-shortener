@@ -10,4 +10,11 @@ CREATE TABLE IF NOT EXISTS count(
     CONSTRAINT count_uni CHECK (id)
 );
 
-INSERT INTO count (value) VALUES(0);
+CREATE INDEX IF NOT EXISTS idx_time_touched
+    ON urls (touched);
+
+INSERT INTO count (id,value)
+VALUES(true,0)
+ON CONFLICT (id)
+    DO NOTHING;
+
