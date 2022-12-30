@@ -26,16 +26,15 @@ func (r *Redis) status() error {
 		)
 	}
 
-	fmt.Println(answer)
 	return nil
 }
 
 // New -.
-func New(port, pass string, db int, opts ...Option) (*Redis, error) {
+func New(address, pass string, db int, opts ...Option) (*Redis, error) {
 	rd := &Redis{
 		client: redis.NewClient(
 			&redis.Options{
-				Addr:     "localhost:" + port,
+				Addr:     address,
 				Password: pass,
 				DB:       db,
 			},

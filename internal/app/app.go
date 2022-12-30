@@ -20,6 +20,7 @@ import (
 	"service-url-shortener/pkg/httpserver"
 	"service-url-shortener/pkg/logger"
 	"service-url-shortener/pkg/postgres"
+	"service-url-shortener/pkg/redis"
 )
 
 // Run creates objects via constructors.
@@ -32,6 +33,12 @@ func Run(cfg *config.Config) {
 		l.Fatal(fmt.Errorf("app - Run - postgres.New: %w", err))
 	}
 	defer pg.Close()
+
+	rd, err := redis.New(cfg.Redis.Address, cfg.Redis.Pass, cfg.Redis.DB)
+	if err != nil {
+		l.Fatal(fmt.Errorf("app - Run - redis.New: %w", err))
+	}
+	defer rd.Close()
 
 	// Use Case
 	d, err := digitiser.New(
