@@ -41,6 +41,7 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, url string, ttl int) (s
 	}
 
 	// TODO: Should be transaction probably
+	// ---------------------------------------------
 	// count of urls in storage
 	count, err := uc.repo.Count(ctx)
 	if err != nil {
@@ -65,6 +66,7 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, url string, ttl int) (s
 	if err != nil {
 		return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.digitiser.String: %w", err)
 	}
+	// ---------------------------------------------
 
 	return uc.blank + short, nil
 }
@@ -95,7 +97,6 @@ func (uc *ShortenerUseCase) Lengthen(ctx context.Context, shortURL string) (stri
 // exist - checks the repository for an already existing URL,
 // if found, returns it short representation in URL.
 func (uc *ShortenerUseCase) exist(ctx context.Context, url string, ttl int) (string, error) {
-	// TODO: Should be transaction probably
 	id, err := uc.repo.GetID(ctx, url)
 	if err != nil {
 		if errors.Is(err, internal.ErrNotFoundURL) {

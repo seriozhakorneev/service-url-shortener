@@ -13,6 +13,22 @@ services:
     ports:
       - 5432:5432
 
+  redis:
+    container_name: redis
+    image: redis:6.2-alpine
+    restart: always
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --save 20 1 --loglevel warning --requirepass "$${REDIS_PASSWORD}"
+    volumes:
+      - redis-data:/var/lib/redis/data
+    environment:
+      REDIS_PORT: '6379'
+      REDIS_PASSWORD: 'pass'
+    ports:
+      - '6379:6379'
+
   app:
     build: .
     container_name: app
@@ -24,6 +40,7 @@ services:
       - 8080:8080
     depends_on:
       - postgres
+      - redis
 
   integration:
     build:
@@ -36,3 +53,4 @@ services:
 
 volumes:
   pg-data:
+  redis-data:
