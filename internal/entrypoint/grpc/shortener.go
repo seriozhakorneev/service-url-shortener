@@ -27,24 +27,29 @@ func newShortenerRoutes(s grpc.ServiceRegistrar, t usecase.Shortener, l logger.I
 }
 
 // Create returns existed or make new short URL from given original.
-func (s *shortenerRoutes) Create(ctx context.Context, request *pb.ShortenerData) (*pb.ShortenerData, error) {
+func (s *shortenerRoutes) Create(ctx context.Context, request *pb.ShortenerCreateURLData) (*pb.ShortenerURLData, error) {
 	err := validateURL(request.URL)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	short, err := s.t.Shorten(ctx, request.URL)
+	err = validateTTL(request.TTL)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	short, err := s.t.Shorten(ctx, request.URL, int(request.TTL))
 	if err != nil {
 		s.l.Error(err, "grpc - Shortener - Create")
 
 		return nil, status.Error(codes.Internal, "shortener service problems")
 	}
 
-	return &pb.ShortenerData{URL: short}, status.Error(codes.OK, "success")
+	return &pb.ShortenerURLData{URL: short}, status.Error(codes.OK, "success")
 }
 
 // Get returns original URL from given short if exists.
-func (s *shortenerRoutes) Get(ctx context.Context, request *pb.ShortenerData) (*pb.ShortenerData, error) {
+func (s *shortenerRoutes) Get(ctx context.Context, request *pb.ShortenerURLData) (*pb.ShortenerURLData, error) {
 	err := validateURL(request.URL)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -64,5 +69,5 @@ func (s *shortenerRoutes) Get(ctx context.Context, request *pb.ShortenerData) (*
 		}
 	}
 
-	return &pb.ShortenerData{URL: original}, status.Error(codes.OK, "success")
+	return &pb.ShortenerURLData{URL: original}, status.Error(codes.OK, "success")
 }

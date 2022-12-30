@@ -16,10 +16,8 @@ import (
 
 const (
 	container = "app"
-
 	// HTTP
 	basePath = "http://" + container + ":8080"
-
 	// GRPC
 	serverAddr = container + ":50051"
 )
@@ -51,12 +49,12 @@ func TestGRPCShortener(t *testing.T) {
 		}
 	}()
 
-	data := &pb.ShortenerData{URL: "not_valid_url"}
+	createData := &pb.ShortenerCreateURLData{URL: "not_valid_url", TTL: -1}
 	expectedStatus := codes.InvalidArgument
 
 	client := pb.NewShortenerClient(conn)
 
-	result, err := client.Create(context.Background(), data)
+	result, err := client.Create(context.Background(), createData)
 	if result != nil {
 		t.Fatalf("Expected nil in Get result, Got: %v", result)
 	}
@@ -66,7 +64,8 @@ func TestGRPCShortener(t *testing.T) {
 		t.Fatalf("Expected status code in Create: %s, Got: %s", expectedStatus, code)
 	}
 
-	result, err = client.Get(context.Background(), data)
+	getData := &pb.ShortenerURLData{URL: "not_valid_url"}
+	result, err = client.Get(context.Background(), getData)
 	if result != nil {
 		t.Fatalf("Expected nil in Get result, Got: %v", result)
 	}

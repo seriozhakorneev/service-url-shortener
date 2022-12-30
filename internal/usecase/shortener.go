@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
+	urlParse "net/url"
 	"strings"
 
 	internal "service-url-shortener/internal/errors"
@@ -26,36 +26,13 @@ func NewShortener(r UrlsRepo, d Digitiser, b string) *ShortenerUseCase {
 	}
 }
 
-// exist - checks the repository for an already existing URL,
-// if found, returns it short representation in URL.
-func (uc *ShortenerUseCase) exist(ctx context.Context, URL string) (string, error) {
-	id, err := uc.repo.GetID(ctx, URL)
-	if err != nil {
-		if errors.Is(err, internal.ErrNotFoundURL) {
-			return "", err
-		}
-
-		return "", fmt.Errorf("exist - uc.repo.GetID: %w", err)
-	}
-
-	short, err := uc.digitiser.String(id)
-	if err != nil {
-		return "", fmt.Errorf("exist - uc.digitiser.String: %w", err)
-	}
-
-	err = uc.repo.Touch(ctx, id)
-	if err != nil {
-		return "", fmt.Errorf("exist - uc.repo.Touch: %w", err)
-	}
-
-	return short, nil
-}
-
 // Shorten - shortens the URL, returns short URL.
-func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, error) {
+func (uc *ShortenerUseCase) Shorten(ctx context.Context, url string, ttl int) (string, error) {
 	// check in storage for already existed URL and return it
-	short, err := uc.exist(ctx, URL)
+	short, err := uc.exist(ctx, url, ttl)
 	if err != nil {
+		// return if any error, but internal.ErrNotFoundURL
+		// if url not found we continue
 		if !errors.Is(err, internal.ErrNotFoundURL) {
 			return "", fmt.Errorf("ShortenerUseCase - Shorten - %w", err)
 		}
@@ -63,6 +40,7 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, er
 		return uc.blank + short, nil
 	}
 
+	// TODO: Should be transaction probably
 	// count of urls in storage
 	count, err := uc.repo.Count(ctx)
 	if err != nil {
@@ -72,12 +50,12 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, er
 	var id int
 	// creating new URL or rewriting the oldest URL
 	if count < uc.digitiser.Max() {
-		id, err = uc.repo.Create(ctx, URL)
+		id, err = uc.repo.Create(ctx, url, ttl)
 		if err != nil {
 			return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.repo.Create: %w", err)
 		}
 	} else {
-		id, err = uc.repo.Rewrite(ctx, URL)
+		id, err = uc.repo.Rewrite(ctx, url, ttl)
 		if err != nil {
 			return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.repo.Rewrite: %w", err)
 		}
@@ -93,11 +71,9 @@ func (uc *ShortenerUseCase) Shorten(ctx context.Context, URL string) (string, er
 
 // Lengthen - returns the URL associated with the given short URL
 func (uc *ShortenerUseCase) Lengthen(ctx context.Context, shortURL string) (string, error) {
-	u, _ := url.Parse(shortURL)
-	short := strings.TrimLeft(u.EscapedPath(), "/")
-
-	if len(short) > uc.digitiser.Length() {
-		return "", internal.ErrImpossibleShortURL
+	short, err := uc.parseShort(shortURL)
+	if err != nil {
+		return "", fmt.Errorf("ShortenerUseCase - Lengthen - uc.parseShort: %w", err)
 	}
 
 	id, err := uc.digitiser.Digit(short)
@@ -110,9 +86,49 @@ func (uc *ShortenerUseCase) Lengthen(ctx context.Context, shortURL string) (stri
 		if errors.Is(err, internal.ErrNotFoundURL) {
 			return "", err
 		}
-
 		return "", fmt.Errorf("ShortenerUseCase - Lengthen - uc.repo.GetURL: %w", err)
 	}
 
 	return URL, nil
+}
+
+// exist - checks the repository for an already existing URL,
+// if found, returns it short representation in URL.
+func (uc *ShortenerUseCase) exist(ctx context.Context, url string, ttl int) (string, error) {
+	// TODO: Should be transaction probably
+	id, err := uc.repo.GetID(ctx, url)
+	if err != nil {
+		if errors.Is(err, internal.ErrNotFoundURL) {
+			return "", err
+		}
+		return "", fmt.Errorf("exist - uc.repo.GetID: %w", err)
+	}
+
+	short, err := uc.digitiser.String(id)
+	if err != nil {
+		return "", fmt.Errorf("exist - uc.digitiser.String: %w", err)
+	}
+
+	err = uc.repo.Touch(ctx, id, ttl)
+	if err != nil {
+		return "", fmt.Errorf("exist - uc.repo.Touch: %w", err)
+	}
+
+	return short, nil
+}
+
+// parseShort - returns the short identifier after / from short url
+func (uc *ShortenerUseCase) parseShort(url string) (string, error) {
+	u, err := urlParse.Parse(url)
+	if err != nil {
+		return "", fmt.Errorf("ShortenerUseCase - parseShort: %w", err)
+	}
+
+	short := strings.TrimLeft(u.EscapedPath(), "/")
+
+	if len(short) > uc.digitiser.Length() {
+		return "", internal.ErrImpossibleShortURL
+	}
+
+	return short, nil
 }
