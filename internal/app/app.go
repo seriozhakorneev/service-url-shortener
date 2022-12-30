@@ -15,7 +15,8 @@ import (
 	"service-url-shortener/internal/usecase"
 	"service-url-shortener/internal/usecase/digitiser"
 	"service-url-shortener/internal/usecase/repo"
-	grpcserver "service-url-shortener/pkg/grpc/server"
+	grpcI "service-url-shortener/pkg/grpc/interceptors"
+	grpcS "service-url-shortener/pkg/grpc/server"
 	"service-url-shortener/pkg/httpserver"
 	"service-url-shortener/pkg/logger"
 	"service-url-shortener/pkg/postgres"
@@ -49,10 +50,10 @@ func Run(cfg *config.Config) {
 	)
 
 	// GRPC Server
-	grpcSer := grpc.NewServer(grpc.UnaryInterceptor(grpcserver.Logs))
+	grpcSer := grpc.NewServer(grpc.UnaryInterceptor(grpcI.Logs))
 	grpcroutes.NewRouter(grpcSer, l, shortenerUseCase)
 
-	grpcServer, err := grpcserver.New(grpcSer, cfg.GRPC.Network, cfg.GRPC.Port, l)
+	grpcServer, err := grpcS.New(grpcSer, cfg.GRPC.Network, cfg.GRPC.Port, l)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - grpcServer - server.New: %w", err))
 	}
