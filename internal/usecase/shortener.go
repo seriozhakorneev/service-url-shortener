@@ -146,10 +146,10 @@ func (uc *ShortenerUseCase) Lengthen(
 		return *value, nil
 	}
 
-	//TODO: testing cache
 	var ttl time.Duration
 	// setting cache on usecase success
-	// catch caching errors
+	// trying to handle caching error for log
+	// if no other error happens
 	defer func() {
 		if err == nil {
 			err = uc.cache.Set(shortURL, original, ttl)
