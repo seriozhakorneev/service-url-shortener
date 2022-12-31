@@ -10,7 +10,7 @@ import (
 
 	pb "service-url-shortener/internal/entrypoint/grpc/shortener_proto"
 	"service-url-shortener/internal/entrypoint/validate"
-	internal "service-url-shortener/internal/errors"
+	service "service-url-shortener/internal/errors"
 	"service-url-shortener/internal/usecase"
 	"service-url-shortener/pkg/logger"
 )
@@ -44,7 +44,7 @@ func (s *shortenerRoutes) Create(
 
 	short, err := s.t.Shorten(ctx, request.URL, ttl)
 	// caching error - just prints log with error, no error response
-	if errors.Is(err, internal.ErrCaching) {
+	if errors.Is(err, service.ErrCaching) {
 		s.l.Warn(err.Error(), "grpc - Shortener - Create")
 	} else if err != nil {
 		s.l.Error(err, "grpc - Shortener - Create")
@@ -68,12 +68,12 @@ func (s *shortenerRoutes) Get(
 	if err != nil {
 		switch {
 		// caching error - just prints log with error, no error response
-		case errors.Is(err, internal.ErrCaching):
+		case errors.Is(err, service.ErrCaching):
 			s.l.Warn(err.Error(), "grpc - Shortener - Get")
-		case errors.Is(err, internal.ErrImpossibleShortURL):
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		case errors.Is(err, internal.ErrNotFoundURL):
-			return nil, status.Error(codes.NotFound, err.Error())
+		case errors.Is(err, service.ErrImpossibleShortURL):
+			return nil, status.Error(codes.InvalidArgument, service.ErrImpossibleShortURL.Error())
+		case errors.Is(err, service.ErrNotFoundURL):
+			return nil, status.Error(codes.NotFound, service.ErrNotFoundURL.Error())
 		default:
 			s.l.Error(err, "grpc - Shortener - Get")
 			return nil, status.Error(codes.Internal, "shortener service problems")

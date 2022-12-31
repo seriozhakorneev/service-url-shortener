@@ -8,7 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 
-	internal "service-url-shortener/internal/errors"
+	service "service-url-shortener/internal/errors"
 	"service-url-shortener/pkg/postgres"
 )
 
@@ -51,7 +51,7 @@ func (r *UrlsRepo) GetID(ctx context.Context, url string) (int, error) {
 	).Scan(&id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, internal.ErrNotFoundURL
+			return 0, service.ErrNotFoundURL
 		}
 		return 0, fmt.Errorf("UrlsRepo - GetID - r.Pool.QueryRow.Scan: %w", err)
 	}
@@ -71,7 +71,7 @@ func (r *UrlsRepo) GetURL(ctx context.Context, id int) (original string, liveTil
 	).Scan(&original, &liveTill)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			err = internal.ErrNotFoundURL
+			err = service.ErrNotFoundURL
 			return
 		}
 

@@ -26,6 +26,7 @@ func (c *UrlsCache) Set(key, value string, ttl time.Duration) error {
 	if err != nil {
 		return fmt.Errorf("UrlsCache - Set - c.Client.Set: %w", err)
 	}
+
 	return nil
 }
 
@@ -38,5 +39,6 @@ func (c *UrlsCache) Get(key string) (*string, error) {
 		}
 		return nil, err
 	}
+
 	return &value, nil
 }

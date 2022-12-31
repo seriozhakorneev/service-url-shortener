@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	internal "service-url-shortener/internal/errors"
+	service "service-url-shortener/internal/errors"
 	"service-url-shortener/internal/usecase/mocks"
 )
 
@@ -160,7 +160,7 @@ func TestShortenerUseCaseShortenErrors(t *testing.T) {
 			usecase: &ShortenerUseCase{
 				repo: &mocks.MockUrlsRepo{
 					GetIDFunc: func(ctx context.Context, s string) (int, error) {
-						return 0, internal.ErrNotFoundURL
+						return 0, service.ErrNotFoundURL
 					},
 					CountFunc: func(ctx context.Context) (int, error) {
 						return 0, errors.New("uc.repo.Count error")
@@ -179,7 +179,7 @@ func TestShortenerUseCaseShortenErrors(t *testing.T) {
 						return 0, errors.New("uc.repo.Create error")
 					},
 					GetIDFunc: func(ctx context.Context, s string) (int, error) {
-						return 0, internal.ErrNotFoundURL
+						return 0, service.ErrNotFoundURL
 					},
 					CountFunc: func(ctx context.Context) (int, error) {
 						return 0, nil
@@ -202,7 +202,7 @@ func TestShortenerUseCaseShortenErrors(t *testing.T) {
 						return 0, errors.New("uc.repo.Rewrite error")
 					},
 					GetIDFunc: func(ctx context.Context, s string) (int, error) {
-						return 0, internal.ErrNotFoundURL
+						return 0, service.ErrNotFoundURL
 					},
 					CountFunc: func(ctx context.Context) (int, error) {
 						return 1, nil
@@ -225,7 +225,7 @@ func TestShortenerUseCaseShortenErrors(t *testing.T) {
 						return 0, nil
 					},
 					GetIDFunc: func(ctx context.Context, s string) (int, error) {
-						return 0, internal.ErrNotFoundURL
+						return 0, service.ErrNotFoundURL
 					},
 					CountFunc: func(ctx context.Context) (int, error) {
 						return 1, nil
@@ -264,7 +264,7 @@ func TestShortenerUseCaseShortenResult(t *testing.T) {
 				return 0, nil
 			},
 			GetIDFunc: func(ctx context.Context, s string) (int, error) {
-				return 0, internal.ErrNotFoundURL
+				return 0, service.ErrNotFoundURL
 			},
 			CountFunc: func(ctx context.Context) (int, error) {
 				return 1, nil
@@ -298,7 +298,7 @@ func TestShortenerUseCaseLengthen(t *testing.T) {
 		usecase     Shortener
 	}{
 		{
-			expectedErr: internal.ErrImpossibleShortURL,
+			expectedErr: service.ErrImpossibleShortURL,
 
 			usecase: &ShortenerUseCase{
 				digitiser: mocks.MockDigitiser{},
@@ -339,12 +339,12 @@ func TestShortenerUseCaseLengthen(t *testing.T) {
 			},
 		},
 		{
-			expectedErr: internal.ErrNotFoundURL,
+			expectedErr: service.ErrNotFoundURL,
 
 			usecase: &ShortenerUseCase{
 				repo: mocks.MockUrlsRepo{
 					GetURLFunc: func(ctx context.Context, i int) (string, error) {
-						return "", internal.ErrNotFoundURL
+						return "", service.ErrNotFoundURL
 					},
 				},
 				digitiser: mocks.MockDigitiser{
