@@ -60,15 +60,15 @@ func (r *UrlsRepo) GetID(ctx context.Context, url string) (int, error) {
 }
 
 // GetURL -.
-func (r *UrlsRepo) GetURL(ctx context.Context, id int) (original string, err error) {
+func (r *UrlsRepo) GetURL(ctx context.Context, id int) (original string, liveTill time.Time, err error) {
 	err = r.Pool.QueryRow(
 		ctx,
-		`SELECT original
+		`SELECT original, live_till
              FROM urls
              WHERE id = $1 AND live_till >= $2`,
 		id,
-		time.Now(),
-	).Scan(&original)
+		time.Now().UTC(),
+	).Scan(&original, &liveTill)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = internal.ErrNotFoundURL
@@ -82,9 +82,9 @@ func (r *UrlsRepo) GetURL(ctx context.Context, id int) (original string, err err
 	return
 }
 
-// Touch -.
-func (r *UrlsRepo) Touch(ctx context.Context, id int, ttl int) (err error) {
-	now := time.Now()
+// Activate -.
+func (r *UrlsRepo) Activate(ctx context.Context, id int, ttl time.Duration) (err error) {
+	now := time.Now().UTC()
 
 	pg, err := r.Pool.Exec(
 		ctx,
@@ -92,16 +92,16 @@ func (r *UrlsRepo) Touch(ctx context.Context, id int, ttl int) (err error) {
              SET activated = $1, live_till = $2
              WHERE id = $3;`,
 		now,
-		now.Add(time.Hour*time.Duration(ttl)),
+		now.Add(ttl),
 		id,
 	)
 	if err != nil {
-		err = fmt.Errorf("UrlsRepo - Touch - r.Pool.Exec: %w", err)
+		err = fmt.Errorf("UrlsRepo - Activate - r.Pool.Exec: %w", err)
 		return
 	}
 
 	if pg.RowsAffected() <= 0 {
-		err = fmt.Errorf("UrlsRepo - Touch - pg.RowsAffected: %s",
+		err = fmt.Errorf("UrlsRepo - Activate - pg.RowsAffected: %s",
 			"rows not affected by sql execution")
 		return
 	}
@@ -110,8 +110,9 @@ func (r *UrlsRepo) Touch(ctx context.Context, id int, ttl int) (err error) {
 }
 
 // Rewrite -.
-func (r *UrlsRepo) Rewrite(ctx context.Context, url string, ttl int) (id int, err error) {
-	now := time.Now()
+func (r *UrlsRepo) Rewrite(ctx context.Context, url string, ttl time.Duration) (id int, err error) {
+	now := time.Now().UTC()
+
 	err = r.Pool.QueryRow(
 		ctx,
 		`UPDATE urls
@@ -123,7 +124,7 @@ func (r *UrlsRepo) Rewrite(ctx context.Context, url string, ttl int) (id int, er
             	)
             RETURNING id;`,
 		now,
-		now.Add(time.Hour*time.Duration(ttl)),
+		now.Add(ttl),
 		url,
 	).Scan(&id)
 	if err != nil {
@@ -135,8 +136,8 @@ func (r *UrlsRepo) Rewrite(ctx context.Context, url string, ttl int) (id int, er
 }
 
 // Create -.
-func (r *UrlsRepo) Create(ctx context.Context, url string, ttl int) (id int, err error) {
-	now := time.Now()
+func (r *UrlsRepo) Create(ctx context.Context, url string, ttl time.Duration) (id int, err error) {
+	now := time.Now().UTC()
 
 	err = r.Pool.QueryRow(
 		ctx,
@@ -144,7 +145,7 @@ func (r *UrlsRepo) Create(ctx context.Context, url string, ttl int) (id int, err
              VALUES($1, $2, $3)
              RETURNING id;`,
 		url,
-		now.Add(time.Hour*time.Duration(ttl)),
+		now.Add(ttl),
 		now,
 	).Scan(&id)
 	if err != nil {

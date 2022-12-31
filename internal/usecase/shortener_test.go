@@ -81,8 +81,8 @@ func TestShortenerUseCaseShortenErrorsExist(t *testing.T) {
 		{
 			expectedErr: fmt.Errorf(
 				"ShortenerUseCase - Shorten - %w",
-				fmt.Errorf("exist - uc.repo.Touch: %w",
-					errors.New("UrlsRepo.Touch error"))),
+				fmt.Errorf("exist - uc.repo.Activate: %w",
+					errors.New("UrlsRepo.Activate error"))),
 
 			usecase: &ShortenerUseCase{
 				repo: mocks.MockUrlsRepo{
@@ -90,7 +90,7 @@ func TestShortenerUseCaseShortenErrorsExist(t *testing.T) {
 						return 0, nil
 					},
 					TouchFunc: func(ctx context.Context, i int) error {
-						return errors.New("UrlsRepo.Touch error")
+						return errors.New("UrlsRepo.Activate error")
 					},
 				},
 				digitiser: mocks.MockDigitiser{

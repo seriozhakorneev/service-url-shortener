@@ -19,6 +19,13 @@ message ShortenerURLData {
 // The shortener message containing URL creation data.
 message ShortenerCreateURLData {
   string URL = 1;
-  // time to live in hours
-  int32 TTL = 2;
+  TTL TTL = 2;
+}
+
+// Time to live meanings for URL creation data
+message TTL {
+  // Unit of time
+  string Unit = 1; // limitations: min, hour
+  // Value of provided time unit
+  int32 Value = 2; // limitations: min(1<=Value<=525600); hour(1<=Value<=8760)
 }

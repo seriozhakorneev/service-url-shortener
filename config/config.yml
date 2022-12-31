@@ -27,4 +27,4 @@ digitiser:
   length: 5
 
 url:
-  blank: 'http://127.0.0.1'
+  blank: 'http://127.0.0.1:8080/'

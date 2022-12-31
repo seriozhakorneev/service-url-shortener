@@ -13,6 +13,7 @@ import (
 	grpcroutes "service-url-shortener/internal/entrypoint/grpc"
 	"service-url-shortener/internal/entrypoint/http"
 	"service-url-shortener/internal/usecase"
+	"service-url-shortener/internal/usecase/cache"
 	"service-url-shortener/internal/usecase/digitiser"
 	"service-url-shortener/internal/usecase/repo"
 	grpcI "service-url-shortener/pkg/grpc/interceptors"
@@ -50,11 +51,7 @@ func Run(cfg *config.Config) {
 		l.Fatal(fmt.Errorf("app - Run - digitiser.NewShortener: %w", err))
 	}
 
-	shortenerUseCase := usecase.NewShortener(
-		repo.New(pg),
-		&d,
-		fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port),
-	)
+	shortenerUseCase := usecase.NewShortener(repo.New(pg), cache.New(rd), &d, cfg.URL.Blank)
 
 	// GRPC Server
 	grpcSer := grpc.NewServer(grpc.UnaryInterceptor(grpcI.Logs))

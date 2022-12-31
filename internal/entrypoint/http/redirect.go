@@ -26,6 +26,9 @@ func (r *redirectRoutes) get(c *gin.Context) {
 	URL, err := r.t.Lengthen(c.Request.Context(), c.Request.RequestURI)
 	if err != nil {
 		switch {
+		// caching error - just prints log with error, no error response
+		case errors.Is(err, internal.ErrCaching):
+			r.l.Warn(err.Error(), "http - v1 - get")
 		case errors.Is(err, internal.ErrImpossibleShortURL):
 			errorResponse(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, internal.ErrNotFoundURL):

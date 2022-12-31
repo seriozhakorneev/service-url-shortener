@@ -1,4 +1,4 @@
-// Package redis implements redis client connection.
+// Package redis implements redis Client connection.
 package redis
 
 import (
@@ -9,30 +9,13 @@ import (
 
 // Redis -.
 type Redis struct {
-	client *redis.Client
-}
-
-func (r *Redis) status() error {
-	answer, err := r.client.Ping().Result()
-	if err != nil {
-		return fmt.Errorf("status - r.client.Ping.Result: %w", err)
-	}
-
-	if answer != "PONG" {
-		return fmt.Errorf(
-			"status - r.client..Ping.Result"+
-				"connection is not set, expected: 'PONG', got: %s",
-			answer,
-		)
-	}
-
-	return nil
+	Client *redis.Client
 }
 
 // New -.
 func New(address, pass string, db int, opts ...Option) (*Redis, error) {
 	rd := &Redis{
-		client: redis.NewClient(
+		Client: redis.NewClient(
 			&redis.Options{
 				Addr:     address,
 				Password: pass,
@@ -46,19 +29,36 @@ func New(address, pass string, db int, opts ...Option) (*Redis, error) {
 		opt(rd)
 	}
 
-	err := rd.status()
+	err := rd.ping()
 	if err != nil {
-		return nil, fmt.Errorf("redis - NewRedis - rd.Status: %w", err)
+		return nil, fmt.Errorf("redis - NewRedis - rd.ping: %w", err)
 	}
 
 	return rd, nil
 }
 
+func (r *Redis) ping() error {
+	answer, err := r.Client.Ping().Result()
+	if err != nil {
+		return fmt.Errorf("ping - r.Client.Ping.Result: %w", err)
+	}
+
+	if answer != "PONG" {
+		return fmt.Errorf(
+			"ping - r.Client..Ping.Result"+
+				"connection is not set, expected: 'PONG', got: %s",
+			answer,
+		)
+	}
+
+	return nil
+}
+
 // Close -.
 func (r *Redis) Close() error {
-	err := r.client.Close()
+	err := r.Client.Close()
 	if err != nil {
-		return fmt.Errorf("redis - Close - r.client.Close: %w", err)
+		return fmt.Errorf("redis - Close - r.Client.Close: %w", err)
 	}
 
 	return nil
