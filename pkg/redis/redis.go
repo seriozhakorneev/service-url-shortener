@@ -40,12 +40,12 @@ func New(address, pass string, db int, opts ...Option) (*Redis, error) {
 func (r *Redis) ping() error {
 	answer, err := r.Client.Ping().Result()
 	if err != nil {
-		return fmt.Errorf("ping - r.Client.Ping.Result: %w", err)
+		return fmt.Errorf("redis - ping - r.Client.ping.Result: %w", err)
 	}
 
 	if answer != "PONG" {
 		return fmt.Errorf(
-			"ping - r.Client..Ping.Result"+
+			"redis - ping - r.Client.ping.Result"+
 				"connection is not set, expected: 'PONG', got: %s",
 			answer,
 		)

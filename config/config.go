@@ -43,9 +43,9 @@ type (
 
 	// Redis -.
 	Redis struct {
-		Address string `env-required:"true" env:"REDDIS_ADDRESS"`
-		Pass    string `env-required:"true" env:"REDDIS_PASS"`
-		DB      int    `yaml:"db"           env:"REDDIS_DB"`
+		Address string `env-required:"true" env:"REDIS_ADDRESS"`
+		Pass    string `env-required:"true" env:"REDIS_PASS"`
+		DB      int    `yaml:"db"           env:"REDIS_DB"`
 	}
 
 	// GRPC -.

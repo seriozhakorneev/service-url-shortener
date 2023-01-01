@@ -15,7 +15,7 @@ services:
 
   redis:
     container_name: redis
-    image: redis:6.2-alpine
+    image: redis:alpine
     restart: always
     command:
       - /bin/sh
@@ -24,18 +24,19 @@ services:
     volumes:
       - redis-data:/var/lib/redis/data
     environment:
-      REDIS_PORT: '6379'
       REDIS_PASSWORD: 'pass'
     ports:
-      - '6379:6379'
+      - 6379:6379
 
   app:
     build: .
     container_name: app
     image: app
     environment:
-      PG_URL: 'postgres://user:pass@postgres:5432/postgres'
       GRPC_DEBUG: 'true'
+      PG_URL: 'postgres://user:pass@postgres:5432/postgres'
+      REDIS_ADDRESS: 'redis:6379'
+      REDIS_PASS: 'pass'
     ports:
       - 8080:8080
     depends_on:
