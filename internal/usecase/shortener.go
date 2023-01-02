@@ -34,11 +34,11 @@ func (uc *ShortenerUseCase) Shorten(
 	ctx context.Context,
 	original string,
 	ttl time.Duration,
-) (short string, err error) {
+) (shortURL string, err error) {
 	// setting cache on usecase success
 	defer func() {
 		if err == nil {
-			err = uc.cache.Set(short, original, ttl)
+			err = uc.cache.Set(shortURL, original, ttl)
 			if err != nil {
 				err = fmt.Errorf("%w: %s", service.ErrCaching, err)
 			}
@@ -46,7 +46,7 @@ func (uc *ShortenerUseCase) Shorten(
 	}()
 
 	// check in storage for already existed URL and return it
-	short, err = uc.exist(ctx, original, ttl)
+	shortURL, err = uc.exist(ctx, original, ttl)
 	if err != nil {
 		// return if any error, but service.ErrNotFoundURL
 		// if url not found we continue
@@ -54,15 +54,15 @@ func (uc *ShortenerUseCase) Shorten(
 			return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.exist: %w", err)
 		}
 	} else {
-		return uc.blank + short, nil
+		return uc.blank + shortURL, nil
 	}
 
-	short, err = uc.create(ctx, original, ttl)
+	shortURL, err = uc.create(ctx, original, ttl)
 	if err != nil {
 		return "", fmt.Errorf("ShortenerUseCase - Shorten - uc.create: %w", err)
 	}
 
-	return uc.blank + short, nil
+	return uc.blank + shortURL, nil
 }
 
 // exist - checks the repository for an already existing URL,
@@ -106,7 +106,7 @@ func (uc *ShortenerUseCase) create(
 	// count of urls in storage
 	count, err := uc.repo.Count(ctx)
 	if err != nil {
-		return "", fmt.Errorf("ShortenerUseCase - create - uc.repo.Count: %w", err)
+		return "", fmt.Errorf("create - uc.repo.Count: %w", err)
 	}
 
 	var id int
@@ -114,18 +114,18 @@ func (uc *ShortenerUseCase) create(
 	if count < uc.digitiser.Max() {
 		id, err = uc.repo.Create(ctx, original, ttl)
 		if err != nil {
-			return "", fmt.Errorf("ShortenerUseCase - create - uc.repo.Create: %w", err)
+			return "", fmt.Errorf("create - uc.repo.Create: %w", err)
 		}
 	} else {
 		id, err = uc.repo.Rewrite(ctx, original, ttl)
 		if err != nil {
-			return "", fmt.Errorf("ShortenerUseCase - create - uc.repo.Rewrite: %w", err)
+			return "", fmt.Errorf("create - uc.repo.Rewrite: %w", err)
 		}
 	}
 
 	short, err := uc.digitiser.String(id)
 	if err != nil {
-		return "", fmt.Errorf("ShortenerUseCase - create - uc.digitiser.String: %w", err)
+		return "", fmt.Errorf("create - uc.digitiser.String: %w", err)
 	}
 	// ---------------------------------------------
 	return short, nil
@@ -184,7 +184,7 @@ func (uc *ShortenerUseCase) Lengthen(
 func (uc *ShortenerUseCase) parseShort(url string) (string, error) {
 	u, err := urlParse.Parse(url)
 	if err != nil {
-		return "", fmt.Errorf("ShortenerUseCase - parseShort - urlParse.Parse: %w", err)
+		return "", fmt.Errorf("parseShort - urlParse.Parse: %w", err)
 	}
 
 	short := strings.TrimLeft(u.EscapedPath(), "/")
@@ -200,7 +200,7 @@ func (uc *ShortenerUseCase) parseShort(url string) (string, error) {
 func (uc *ShortenerUseCase) get(ctx context.Context, short string) (string, time.Time, error) {
 	id, err := uc.digitiser.Digit(short)
 	if err != nil {
-		return "", time.Time{}, fmt.Errorf("ShortenerUseCase - get - uc.digitiser.Digit: %w", err)
+		return "", time.Time{}, fmt.Errorf("get - uc.digitiser.Digit: %w", err)
 	}
 
 	original, liveTill, err := uc.repo.GetURL(ctx, id)
@@ -208,7 +208,7 @@ func (uc *ShortenerUseCase) get(ctx context.Context, short string) (string, time
 		if errors.Is(err, service.ErrNotFoundURL) {
 			return "", time.Time{}, err
 		}
-		return "", time.Time{}, fmt.Errorf("ShortenerUseCase - get - uc.repo.GetURL: %w", err)
+		return "", time.Time{}, fmt.Errorf("get - uc.repo.GetURL: %w", err)
 	}
 
 	return original, liveTill, nil
