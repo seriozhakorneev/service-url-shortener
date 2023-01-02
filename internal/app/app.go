@@ -46,7 +46,7 @@ func Run(cfg *config.Config) {
 	d, err := digitiser.New(
 		cfg.Digitiser.Base,
 		cfg.Digitiser.Length,
-		cfg.Digitiser.MaxRepoCount,
+		cfg.Digitiser.MaxCount,
 	)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - digitiser.NewShortener: %w", err))

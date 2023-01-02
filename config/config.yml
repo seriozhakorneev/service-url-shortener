@@ -18,11 +18,14 @@ grpc:
   network: 'tcp'
   port: '50051'
 
-# sensitive values
-# changes can lead to maximum allowable integer errors
+# sensitive values changes can lead to maximum allowable integer errors
 # in code or storage, check digitiser.Max()
 digitiser:
-  max_repo_count: 2147483647 # postgres_max_int
+  # this field tells at what id value
+  # we shall start rewrite oldest urls
+  max_count: 2147483647 # postgres_max_int
+
+  # short url identifier config
   base: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
   length: 5
 

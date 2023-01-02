@@ -56,9 +56,9 @@ type (
 
 	// Digitiser -.
 	Digitiser struct {
-		MaxRepoCount int    `yaml:"max_repo_count"`
-		Base         string `yaml:"base"`
-		Length       int    `yaml:"length"`
+		MaxCount int    `yaml:"max_count"`
+		Base     string `yaml:"base"`
+		Length   int    `yaml:"length"`
 	}
 
 	// URL -.
