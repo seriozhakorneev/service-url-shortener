@@ -252,7 +252,6 @@ func FuzzDigitiserString(f *testing.F) {
 			if v, ok := digitiser.lookup[r]; !ok {
 				t.Fatalf("expected r(%d) in lookup, got: %d", r, v)
 			}
-
 		}
 	})
 }

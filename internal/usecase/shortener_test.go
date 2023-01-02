@@ -326,7 +326,6 @@ func TestShortenerUseCaseLengthenCacheGetResult(t *testing.T) {
 	if original != tOriginal {
 		t.Fatalf("Expected original url: %s\nGot%s", tOriginal, original)
 	}
-
 }
 
 func TestShortenerUseCaseLengthenParseShortErrors(t *testing.T) {

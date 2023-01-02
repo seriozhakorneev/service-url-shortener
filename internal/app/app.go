@@ -35,6 +35,7 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
+	// Cache
 	rd, err := redis.New(cfg.Redis.Address, cfg.Redis.Pass, cfg.Redis.DB)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - redis.New: %w", err))
@@ -56,7 +57,6 @@ func Run(cfg *config.Config) {
 	// GRPC Server
 	grpcSer := grpc.NewServer(grpc.UnaryInterceptor(grpcI.Logs))
 	grpcroutes.NewRouter(grpcSer, l, shortenerUseCase)
-
 	grpcServer, err := grpcS.New(grpcSer, cfg.GRPC.Network, cfg.GRPC.Port, l)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - grpcServer - server.New: %w", err))
