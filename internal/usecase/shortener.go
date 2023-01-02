@@ -101,17 +101,15 @@ func (uc *ShortenerUseCase) create(
 	original string,
 	ttl time.Duration,
 ) (string, error) {
-	// TODO: Should be transaction
-	// ---------------------------------------------
-	// count of urls in storage
-	count, err := uc.repo.Count(ctx)
+	// last url int-id in storage
+	last, err := uc.repo.Last(ctx)
 	if err != nil {
-		return "", fmt.Errorf("create - uc.repo.Count: %w", err)
+		return "", fmt.Errorf("create - uc.repo.Last: %w", err)
 	}
 
 	var id int
 	// creating new entry or rewriting the oldest
-	if count < uc.digitiser.Max() {
+	if last < uc.digitiser.Max() {
 		id, err = uc.repo.Create(ctx, original, ttl)
 		if err != nil {
 			return "", fmt.Errorf("create - uc.repo.Create: %w", err)
@@ -127,7 +125,7 @@ func (uc *ShortenerUseCase) create(
 	if err != nil {
 		return "", fmt.Errorf("create - uc.digitiser.String: %w", err)
 	}
-	// ---------------------------------------------
+
 	return short, nil
 }
 

@@ -150,14 +150,14 @@ func TestShortenerUseCaseShortenCreateErrors(t *testing.T) {
 		{
 			expError: fmt.Errorf(
 				"ShortenerUseCase - Shorten - uc.create: %w",
-				fmt.Errorf("create - uc.repo.Count: %w",
-					errors.New("uc.repo.Count error"),
+				fmt.Errorf("create - uc.repo.Last: %w",
+					errors.New("uc.repo.Last error"),
 				),
 			),
 			usecase: &ShortenerUseCase{
 				repo: &mocks.MockUrlsRepo{
 					GetIDFunc: func(context.Context, string) (int, error) { return 0, service.ErrNotFoundURL },
-					CountFunc: func(context.Context) (int, error) { return 0, errors.New("uc.repo.Count error") },
+					CountFunc: func(context.Context) (int, error) { return 0, errors.New("uc.repo.Last error") },
 				},
 			},
 		},

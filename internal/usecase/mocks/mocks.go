@@ -84,7 +84,7 @@ func (m MockUrlsRepo) Activate(ctx context.Context, i int, d time.Duration) erro
 	return nil
 }
 
-func (m MockUrlsRepo) Count(ctx context.Context) (int, error) {
+func (m MockUrlsRepo) Last(ctx context.Context) (int, error) {
 	if m.CountFunc != nil {
 		return m.CountFunc(ctx)
 	}

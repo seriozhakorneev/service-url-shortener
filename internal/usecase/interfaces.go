@@ -27,7 +27,7 @@ type (
 		GetURL(context.Context, int) (string, time.Time, error)
 		GetID(context.Context, string) (int, error)
 		Activate(context.Context, int, time.Duration) error
-		Count(context.Context) (int, error)
+		Last(context.Context) (int, error)
 	}
 
 	// UrlsCache -.
