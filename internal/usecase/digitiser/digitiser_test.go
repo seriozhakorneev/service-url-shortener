@@ -68,6 +68,15 @@ func FuzzDigitiserNew(f *testing.F) {
 func TestDigitiserNew(t *testing.T) {
 	t.Parallel()
 
+	expError := fmt.Errorf(
+		"impossible configuration: digits len(%d) less than 1",
+		len(""),
+	)
+	_, err := New("", 0, 0)
+	if !reflect.DeepEqual(err, expError) {
+		t.Fatalf("Expected error: %s\nGot:%s", expError, err)
+	}
+
 	expected := Digitiser{
 		digBase: base,
 		digits:  digits,
@@ -76,7 +85,7 @@ func TestDigitiserNew(t *testing.T) {
 		strLen:  length,
 	}
 
-	err := expected.makeLookup()
+	err = expected.makeLookup()
 	if err != nil {
 		t.Fatal("make lookup failed in testing:", err)
 	}
@@ -252,7 +261,6 @@ func FuzzDigitiserString(f *testing.F) {
 			if v, ok := digitiser.lookup[r]; !ok {
 				t.Fatalf("expected r(%d) in lookup, got: %d", r, v)
 			}
-
 		}
 	})
 }

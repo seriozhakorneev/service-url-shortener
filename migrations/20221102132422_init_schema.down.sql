@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS urls, count;
+DROP TABLE IF EXISTS urls, last;

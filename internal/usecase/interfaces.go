@@ -1,11 +1,14 @@
 package usecase
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type (
 	// Shortener -.
 	Shortener interface {
-		Shorten(context.Context, string) (string, error)
+		Shorten(context.Context, string, time.Duration) (string, error)
 		Lengthen(context.Context, string) (string, error)
 	}
 
@@ -19,11 +22,17 @@ type (
 
 	// UrlsRepo -.
 	UrlsRepo interface {
-		Create(context.Context, string) (int, error)
-		Rewrite(context.Context, string) (int, error)
-		GetURL(context.Context, int) (string, error)
+		Create(context.Context, string, time.Duration) (int, error)
+		Rewrite(context.Context, string, time.Duration) (int, error)
+		GetURL(context.Context, int) (string, time.Time, error)
 		GetID(context.Context, string) (int, error)
-		Touch(context.Context, int) error
-		Count(context.Context) (int, error)
+		Activate(context.Context, int, time.Duration) error
+		Last(context.Context) (int, error)
+	}
+
+	// UrlsCache -.
+	UrlsCache interface {
+		Set(string, string, time.Duration) error
+		Get(string) (*string, error)
 	}
 )

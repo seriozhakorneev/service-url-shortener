@@ -1,13 +1,17 @@
-package server
+package interceptors
 
 import (
 	"context"
+	"io"
+	"os"
 	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/status"
 )
+
+var defaultWriter io.Writer = os.Stdout
 
 var Logs = func(
 	ctx context.Context,

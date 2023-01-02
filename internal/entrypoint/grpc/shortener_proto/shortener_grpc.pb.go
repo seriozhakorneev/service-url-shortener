@@ -23,9 +23,9 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ShortenerClient interface {
 	// Create short URL by sending original.
-	Create(ctx context.Context, in *ShortenerData, opts ...grpc.CallOption) (*ShortenerData, error)
+	Create(ctx context.Context, in *ShortenerCreateURLData, opts ...grpc.CallOption) (*ShortenerURLData, error)
 	// Get original URL by sending short.
-	Get(ctx context.Context, in *ShortenerData, opts ...grpc.CallOption) (*ShortenerData, error)
+	Get(ctx context.Context, in *ShortenerURLData, opts ...grpc.CallOption) (*ShortenerURLData, error)
 }
 
 type shortenerClient struct {
@@ -36,8 +36,8 @@ func NewShortenerClient(cc grpc.ClientConnInterface) ShortenerClient {
 	return &shortenerClient{cc}
 }
 
-func (c *shortenerClient) Create(ctx context.Context, in *ShortenerData, opts ...grpc.CallOption) (*ShortenerData, error) {
-	out := new(ShortenerData)
+func (c *shortenerClient) Create(ctx context.Context, in *ShortenerCreateURLData, opts ...grpc.CallOption) (*ShortenerURLData, error) {
+	out := new(ShortenerURLData)
 	err := c.cc.Invoke(ctx, "/shortener_proto.Shortener/Create", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -45,8 +45,8 @@ func (c *shortenerClient) Create(ctx context.Context, in *ShortenerData, opts ..
 	return out, nil
 }
 
-func (c *shortenerClient) Get(ctx context.Context, in *ShortenerData, opts ...grpc.CallOption) (*ShortenerData, error) {
-	out := new(ShortenerData)
+func (c *shortenerClient) Get(ctx context.Context, in *ShortenerURLData, opts ...grpc.CallOption) (*ShortenerURLData, error) {
+	out := new(ShortenerURLData)
 	err := c.cc.Invoke(ctx, "/shortener_proto.Shortener/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -59,9 +59,9 @@ func (c *shortenerClient) Get(ctx context.Context, in *ShortenerData, opts ...gr
 // for forward compatibility
 type ShortenerServer interface {
 	// Create short URL by sending original.
-	Create(context.Context, *ShortenerData) (*ShortenerData, error)
+	Create(context.Context, *ShortenerCreateURLData) (*ShortenerURLData, error)
 	// Get original URL by sending short.
-	Get(context.Context, *ShortenerData) (*ShortenerData, error)
+	Get(context.Context, *ShortenerURLData) (*ShortenerURLData, error)
 	mustEmbedUnimplementedShortenerServer()
 }
 
@@ -69,10 +69,10 @@ type ShortenerServer interface {
 type UnimplementedShortenerServer struct {
 }
 
-func (UnimplementedShortenerServer) Create(context.Context, *ShortenerData) (*ShortenerData, error) {
+func (UnimplementedShortenerServer) Create(context.Context, *ShortenerCreateURLData) (*ShortenerURLData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
-func (UnimplementedShortenerServer) Get(context.Context, *ShortenerData) (*ShortenerData, error) {
+func (UnimplementedShortenerServer) Get(context.Context, *ShortenerURLData) (*ShortenerURLData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedShortenerServer) mustEmbedUnimplementedShortenerServer() {}
@@ -89,7 +89,7 @@ func RegisterShortenerServer(s grpc.ServiceRegistrar, srv ShortenerServer) {
 }
 
 func _Shortener_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ShortenerData)
+	in := new(ShortenerCreateURLData)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -101,13 +101,13 @@ func _Shortener_Create_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/shortener_proto.Shortener/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShortenerServer).Create(ctx, req.(*ShortenerData))
+		return srv.(ShortenerServer).Create(ctx, req.(*ShortenerCreateURLData))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Shortener_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ShortenerData)
+	in := new(ShortenerURLData)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func _Shortener_Get_Handler(srv interface{}, ctx context.Context, dec func(inter
 		FullMethod: "/shortener_proto.Shortener/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShortenerServer).Get(ctx, req.(*ShortenerData))
+		return srv.(ShortenerServer).Get(ctx, req.(*ShortenerURLData))
 	}
 	return interceptor(ctx, in, info, handler)
 }

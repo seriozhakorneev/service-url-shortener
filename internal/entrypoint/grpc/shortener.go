@@ -9,7 +9,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	pb "service-url-shortener/internal/entrypoint/grpc/shortener_proto"
-	internal "service-url-shortener/internal/errors"
+	"service-url-shortener/internal/entrypoint/validate"
+	service "service-url-shortener/internal/errors"
 	"service-url-shortener/internal/usecase"
 	"service-url-shortener/pkg/logger"
 )
@@ -27,25 +28,38 @@ func newShortenerRoutes(s grpc.ServiceRegistrar, t usecase.Shortener, l logger.I
 }
 
 // Create returns existed or make new short URL from given original.
-func (s *shortenerRoutes) Create(ctx context.Context, request *pb.ShortenerData) (*pb.ShortenerData, error) {
-	err := validateURL(request.URL)
+func (s *shortenerRoutes) Create(
+	ctx context.Context,
+	request *pb.ShortenerCreateURLData,
+) (*pb.ShortenerURLData, error) {
+	err := validate.URL(request.URL)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	short, err := s.t.Shorten(ctx, request.URL)
+	ttl, err := validate.TTL(request.TTL.Unit, request.TTL.Value)
 	if err != nil {
-		s.l.Error(err, "grpc - Shortener - Create")
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
+	short, err := s.t.Shorten(ctx, request.URL, ttl)
+	// caching error - just prints log with error, no error response
+	if errors.Is(err, service.ErrCaching) {
+		s.l.Warn(err.Error(), "grpc - Shortener - Create")
+	} else if err != nil {
+		s.l.Error(err, "grpc - Shortener - Create")
 		return nil, status.Error(codes.Internal, "shortener service problems")
 	}
 
-	return &pb.ShortenerData{URL: short}, status.Error(codes.OK, "success")
+	return &pb.ShortenerURLData{URL: short}, status.Error(codes.OK, "success")
 }
 
 // Get returns original URL from given short if exists.
-func (s *shortenerRoutes) Get(ctx context.Context, request *pb.ShortenerData) (*pb.ShortenerData, error) {
-	err := validateURL(request.URL)
+func (s *shortenerRoutes) Get(
+	ctx context.Context,
+	request *pb.ShortenerURLData,
+) (*pb.ShortenerURLData, error) {
+	err := validate.URL(request.URL)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -53,16 +67,18 @@ func (s *shortenerRoutes) Get(ctx context.Context, request *pb.ShortenerData) (*
 	original, err := s.t.Lengthen(ctx, request.URL)
 	if err != nil {
 		switch {
-		case errors.Is(err, internal.ErrImpossibleShortURL):
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		case errors.Is(err, internal.ErrNotFoundURL):
-			return nil, status.Error(codes.NotFound, err.Error())
+		// caching error - just prints log with error, no error response
+		case errors.Is(err, service.ErrCaching):
+			s.l.Warn(err.Error(), "grpc - Shortener - Get")
+		case errors.Is(err, service.ErrImpossibleShortURL):
+			return nil, status.Error(codes.InvalidArgument, service.ErrImpossibleShortURL.Error())
+		case errors.Is(err, service.ErrNotFoundURL):
+			return nil, status.Error(codes.NotFound, service.ErrNotFoundURL.Error())
 		default:
 			s.l.Error(err, "grpc - Shortener - Get")
-
 			return nil, status.Error(codes.Internal, "shortener service problems")
 		}
 	}
 
-	return &pb.ShortenerData{URL: original}, status.Error(codes.OK, "success")
+	return &pb.ShortenerURLData{URL: original}, status.Error(codes.OK, "success")
 }

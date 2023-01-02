@@ -13,12 +13,15 @@ import (
 	grpcroutes "service-url-shortener/internal/entrypoint/grpc"
 	"service-url-shortener/internal/entrypoint/http"
 	"service-url-shortener/internal/usecase"
+	"service-url-shortener/internal/usecase/cache"
 	"service-url-shortener/internal/usecase/digitiser"
 	"service-url-shortener/internal/usecase/repo"
-	grpcserver "service-url-shortener/pkg/grpc/server"
+	grpcI "service-url-shortener/pkg/grpc/interceptors"
+	grpcS "service-url-shortener/pkg/grpc/server"
 	"service-url-shortener/pkg/httpserver"
 	"service-url-shortener/pkg/logger"
 	"service-url-shortener/pkg/postgres"
+	"service-url-shortener/pkg/redis"
 )
 
 // Run creates objects via constructors.
@@ -32,27 +35,29 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
+	// Cache
+	rd, err := redis.New(cfg.Redis.Address, cfg.Redis.Pass, cfg.Redis.DB)
+	if err != nil {
+		l.Fatal(fmt.Errorf("app - Run - redis.New: %w", err))
+	}
+	defer rd.Close()
+
 	// Use Case
 	d, err := digitiser.New(
 		cfg.Digitiser.Base,
 		cfg.Digitiser.Length,
-		cfg.Digitiser.MaxRepoInt,
+		cfg.Digitiser.MaxCount,
 	)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - digitiser.NewShortener: %w", err))
 	}
 
-	shortenerUseCase := usecase.NewShortener(
-		repo.New(pg),
-		&d,
-		fmt.Sprintf("%s:%s/", cfg.URL.Blank, cfg.HTTP.Port),
-	)
+	shortenerUseCase := usecase.NewShortener(repo.New(pg), cache.New(rd), &d, cfg.URL.Blank)
 
 	// GRPC Server
-	grpcSer := grpc.NewServer(grpc.UnaryInterceptor(grpcserver.Logs))
+	grpcSer := grpc.NewServer(grpc.UnaryInterceptor(grpcI.Logs))
 	grpcroutes.NewRouter(grpcSer, l, shortenerUseCase)
-
-	grpcServer, err := grpcserver.New(grpcSer, cfg.GRPC.Network, cfg.GRPC.Port, l)
+	grpcServer, err := grpcS.New(grpcSer, cfg.GRPC.Network, cfg.GRPC.Port, l)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - grpcServer - server.New: %w", err))
 	}

@@ -13,17 +13,35 @@ services:
     ports:
       - 5432:5432
 
+  redis:
+    container_name: redis
+    image: redis:alpine
+    restart: always
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --save 20 1 --loglevel warning --requirepass "$${REDIS_PASSWORD}"
+    volumes:
+      - redis-data:/var/lib/redis/data
+    environment:
+      REDIS_PASSWORD: 'pass'
+    ports:
+      - 6379:6379
+
   app:
     build: .
     container_name: app
     image: app
     environment:
-      PG_URL: 'postgres://user:pass@postgres:5432/postgres'
       GRPC_DEBUG: 'true'
+      PG_URL: 'postgres://user:pass@postgres:5432/postgres'
+      REDIS_ADDRESS: 'redis:6379'
+      REDIS_PASS: 'pass'
     ports:
       - 8080:8080
     depends_on:
       - postgres
+      - redis
 
   integration:
     build:
@@ -36,3 +54,4 @@ services:
 
 volumes:
   pg-data:
+  redis-data:

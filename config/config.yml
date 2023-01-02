@@ -11,17 +11,23 @@ logger:
 postgres:
   pool_max: 2
 
+redis:
+  db: 0
+
 grpc:
   network: 'tcp'
   port: '50051'
 
-# sensitive values, changes can lead to maximum allowable integer errors
+# sensitive values changes can lead to maximum allowable integer errors
 # in code or storage, check digitiser.Max()
 digitiser:
-  # postgres_max_int
-  max_repo_int: 2147483647
+  # this field tells at what id value
+  # we shall start rewrite oldest urls
+  max_count: 2147483647 # postgres_max_int
+
+  # short url identifier config
   base: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
   length: 5
 
 url:
-  blank: 'http://127.0.0.1'
+  blank: 'http://127.0.0.1:8080/'

@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	internal "service-url-shortener/internal/errors"
+	service "service-url-shortener/internal/errors"
 	"service-url-shortener/internal/usecase"
 	"service-url-shortener/pkg/logger"
 )
@@ -26,14 +26,13 @@ func (r *redirectRoutes) get(c *gin.Context) {
 	URL, err := r.t.Lengthen(c.Request.Context(), c.Request.RequestURI)
 	if err != nil {
 		switch {
-		case errors.Is(err, internal.ErrImpossibleShortURL):
-			errorResponse(c, http.StatusBadRequest, err.Error())
-
-			return
-		case errors.Is(err, internal.ErrNotFoundURL):
-			errorResponse(c, http.StatusNotFound, err.Error())
-
-			return
+		// caching error - just prints log with error, no error response
+		case errors.Is(err, service.ErrCaching):
+			r.l.Warn(err.Error(), "http - v1 - get")
+		case errors.Is(err, service.ErrImpossibleShortURL):
+			errorResponse(c, http.StatusBadRequest, service.ErrImpossibleShortURL.Error())
+		case errors.Is(err, service.ErrNotFoundURL):
+			errorResponse(c, http.StatusNotFound, service.ErrNotFoundURL.Error())
 		default:
 			r.l.Error(err, "http - v1 - get")
 			errorResponse(c, http.StatusInternalServerError, "shortener service problems")

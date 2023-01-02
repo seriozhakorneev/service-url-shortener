@@ -6,12 +6,26 @@ option go_package = "service-url-shortener/internal/entrypoint/grpc/shortener_pr
 // The Shortener service definition.
 service Shortener {
   // Create short URL by sending original.
-  rpc Create (ShortenerData) returns (ShortenerData) {}
+  rpc Create (ShortenerCreateURLData) returns (ShortenerURLData) {}
   // Get original URL by sending short.
-  rpc Get (ShortenerData) returns (ShortenerData) {}
+  rpc Get (ShortenerURLData) returns (ShortenerURLData) {}
 }
 
 // The shortener message containing URL.
-message ShortenerData {
+message ShortenerURLData {
   string URL = 1;
+}
+
+// The shortener message containing URL creation data.
+message ShortenerCreateURLData {
+  string URL = 1;
+  TTL TTL = 2;
+}
+
+// Time to live meanings for URL creation data
+message TTL {
+  // Unit of time
+  string Unit = 1; // limitations: min, hour
+  // Value of provided time unit
+  int32 Value = 2; // limitations: min(1<=Value<=525600); hour(1<=Value<=8760)
 }

@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	pb "service-url-shortener/internal/entrypoint/grpc/shortener_proto"
+	"service-url-shortener/pkg/redis"
 )
 
 const (
@@ -19,9 +20,12 @@ const (
 
 	// HTTP
 	basePath = "http://" + container + ":8080"
-
 	// GRPC
-	serverAddr = container + ":50051"
+	grpcAddr = container + ":50051"
+	// Redis
+	redisAddr = "redis:6379"
+	redisPass = ""
+	redisDB   = 0
 )
 
 // HTTP GET: /.
@@ -31,7 +35,7 @@ func TestHTTPRedirectGet(t *testing.T) {
 		Get(basePath+"/testlink"),
 		Expect().Status().Equal(http.StatusBadRequest),
 		Expect().Body().JSON().JQ(".error").Equal(
-			"provided short URL too long or "+
+			"provided short url too long or "+
 				"impossible with current configurations",
 		),
 	)
@@ -39,7 +43,10 @@ func TestHTTPRedirectGet(t *testing.T) {
 
 // GRPC: Shortener.
 func TestGRPCShortener(t *testing.T) {
-	conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(
+		grpcAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
 		t.Fatalf("GRPC client - grpc.Dial: %v", err)
 	}
@@ -51,12 +58,15 @@ func TestGRPCShortener(t *testing.T) {
 		}
 	}()
 
-	data := &pb.ShortenerData{URL: "not_valid_url"}
+	createData := &pb.ShortenerCreateURLData{
+		URL: "not_valid_url",
+		TTL: &pb.TTL{Value: 2005, Unit: "year"},
+	}
 	expectedStatus := codes.InvalidArgument
 
 	client := pb.NewShortenerClient(conn)
 
-	result, err := client.Create(context.Background(), data)
+	result, err := client.Create(context.Background(), createData)
 	if result != nil {
 		t.Fatalf("Expected nil in Get result, Got: %v", result)
 	}
@@ -66,7 +76,8 @@ func TestGRPCShortener(t *testing.T) {
 		t.Fatalf("Expected status code in Create: %s, Got: %s", expectedStatus, code)
 	}
 
-	result, err = client.Get(context.Background(), data)
+	getData := &pb.ShortenerURLData{URL: "not_valid_url"}
+	result, err = client.Get(context.Background(), getData)
 	if result != nil {
 		t.Fatalf("Expected nil in Get result, Got: %v", result)
 	}
@@ -75,5 +86,20 @@ func TestGRPCShortener(t *testing.T) {
 
 	if code != expectedStatus {
 		t.Fatalf("Expected status code in Get: %s, Got: %s", expectedStatus, code)
+	}
+}
+
+func TestRedisPing(t *testing.T) {
+	rd, err := redis.New(redisAddr, redisPass, redisDB)
+	if redisPass == "" && err != nil {
+		expErr := "redis - NewRedis - rd.ping: redis - ping - " +
+			"r.Client.ping.Result: NOAUTH Authentication required."
+		if err.Error() != expErr {
+			t.Fatalf("Expected error with no pass: %s,\nGot: %s", expErr, err)
+		}
+	} else if err != nil {
+		t.Fatal("Unexpected error in test:", err)
+	} else {
+		rd.Close()
 	}
 }

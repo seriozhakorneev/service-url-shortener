@@ -13,6 +13,7 @@ type (
 		HTTP      `yaml:"http"`
 		Log       `yaml:"logger"`
 		PG        `yaml:"postgres"`
+		Redis     `yaml:"redis"`
 		GRPC      `yaml:"grpc"`
 		Digitiser `yaml:"digitiser"`
 		URL       `yaml:"url"`
@@ -40,6 +41,14 @@ type (
 		URL     string `env-required:"true"                 env:"PG_URL"`
 	}
 
+	// Redis -.
+	Redis struct {
+		Address string `env-required:"true" env:"REDIS_ADDRESS"`
+		Pass    string `env-required:"true" env:"REDIS_PASS"`
+		DB      int    `yaml:"db"           env:"REDIS_DB"`
+	}
+
+	// GRPC -.
 	GRPC struct {
 		Network string `env-required:"true" yaml:"network" env:"GRPC_NETWORK"`
 		Port    string `env-required:"true" yaml:"port" env:"GRPC_PORT"`
@@ -47,9 +56,9 @@ type (
 
 	// Digitiser -.
 	Digitiser struct {
-		MaxRepoInt int    `yaml:"max_repo_int"`
-		Base       string `yaml:"base"`
-		Length     int    `yaml:"length"`
+		MaxCount int    `yaml:"max_count"`
+		Base     string `yaml:"base"`
+		Length   int    `yaml:"length"`
 	}
 
 	// URL -.

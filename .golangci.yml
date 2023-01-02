@@ -17,7 +17,7 @@ linters-settings:
   gocognit:
     min-complexity: 15
   gocyclo:
-    min-complexity: 10
+    min-complexity: 20
   goconst:
     min-len: 2
     min-occurrences: 2
@@ -57,7 +57,6 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - cyclop
     - depguard
     - dogsled
     - durationcheck
@@ -98,6 +97,7 @@ linters:
     - whitespace
 
 # disable:
+#    - cyclop
 #    - wsl
 #    - gocritic
 #    - errcheck

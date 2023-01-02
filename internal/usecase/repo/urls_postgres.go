@@ -8,7 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 
-	internal "service-url-shortener/internal/errors"
+	service "service-url-shortener/internal/errors"
 	"service-url-shortener/pkg/postgres"
 )
 
@@ -22,15 +22,16 @@ func New(pg *postgres.Postgres) *UrlsRepo {
 	return &UrlsRepo{pg}
 }
 
-// Count -.
-func (r *UrlsRepo) Count(ctx context.Context) (value int, err error) {
+// Last -.
+func (r *UrlsRepo) Last(ctx context.Context) (value int, err error) {
 	err = r.Pool.QueryRow(
 		ctx,
-		`SELECT value FROM count WHERE id=true`,
+		`SELECT value
+             FROM last
+             WHERE id=true`,
 	).Scan(&value)
 	if err != nil {
-		err = fmt.Errorf("UrlsRepo - Count - r.Pool.QueryRow.Scan: %w", err)
-
+		err = fmt.Errorf("UrlsRepo - Last - r.Pool.QueryRow.Scan: %w", err)
 		return
 	}
 
@@ -43,14 +44,15 @@ func (r *UrlsRepo) GetID(ctx context.Context, url string) (int, error) {
 
 	err := r.Pool.QueryRow(
 		ctx,
-		`SELECT id FROM urls WHERE original = $1`,
+		`SELECT id
+             FROM urls
+             WHERE original = $1`,
 		url,
 	).Scan(&id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, internal.ErrNotFoundURL
+			return 0, service.ErrNotFoundURL
 		}
-
 		return 0, fmt.Errorf("UrlsRepo - GetID - r.Pool.QueryRow.Scan: %w", err)
 	}
 
@@ -58,44 +60,49 @@ func (r *UrlsRepo) GetID(ctx context.Context, url string) (int, error) {
 }
 
 // GetURL -.
-func (r *UrlsRepo) GetURL(ctx context.Context, id int) (original string, err error) {
+func (r *UrlsRepo) GetURL(ctx context.Context, id int) (original string, liveTill time.Time, err error) {
 	err = r.Pool.QueryRow(
 		ctx,
-		`SELECT original FROM urls WHERE id = $1`,
+		`SELECT original, live_till
+             FROM urls
+             WHERE id = $1 AND live_till >= $2`,
 		id,
-	).Scan(&original)
+		time.Now().UTC(),
+	).Scan(&original, &liveTill)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			err = internal.ErrNotFoundURL
-
+			err = service.ErrNotFoundURL
 			return
 		}
 
 		err = fmt.Errorf("UrlsRepo - GetURL - r.Pool.QueryRow.Scan: %w", err)
-
 		return
 	}
 
 	return
 }
 
-// Touch -.
-func (r *UrlsRepo) Touch(ctx context.Context, id int) (err error) {
+// Activate -.
+func (r *UrlsRepo) Activate(ctx context.Context, id int, ttl time.Duration) (err error) {
+	now := time.Now().UTC()
+
 	pg, err := r.Pool.Exec(
 		ctx,
-		`UPDATE urls SET touched = $1 WHERE id = $2;`,
-		time.Now(), id,
+		`UPDATE urls
+             SET activated = $1, live_till = $2
+             WHERE id = $3;`,
+		now,
+		now.Add(ttl),
+		id,
 	)
 	if err != nil {
-		err = fmt.Errorf("UrlsRepo - Touch - r.Pool.Exec: %w", err)
-
+		err = fmt.Errorf("UrlsRepo - Activate - r.Pool.Exec: %w", err)
 		return
 	}
 
 	if pg.RowsAffected() <= 0 {
-		err = fmt.Errorf("UrlsRepo - Touch - pg.RowsAffected: %s",
+		err = fmt.Errorf("UrlsRepo - Activate - pg.RowsAffected: %s",
 			"rows not affected by sql execution")
-
 		return
 	}
 
@@ -103,22 +110,25 @@ func (r *UrlsRepo) Touch(ctx context.Context, id int) (err error) {
 }
 
 // Rewrite -.
-func (r *UrlsRepo) Rewrite(ctx context.Context, url string) (id int, err error) {
+func (r *UrlsRepo) Rewrite(ctx context.Context, url string, ttl time.Duration) (id int, err error) {
+	now := time.Now().UTC()
+
 	err = r.Pool.QueryRow(
 		ctx,
 		`UPDATE urls
-			SET touched = $1, original = $2
-            WHERE touched =
+			SET activated = $1, live_till = $2, original = $3
+            WHERE activated =
             	(
-            		SELECT MIN(touched)
+            		SELECT MIN(activated)
             		FROM urls
             	)
             RETURNING id;`,
-		time.Now(), url,
+		now,
+		now.Add(ttl),
+		url,
 	).Scan(&id)
 	if err != nil {
 		err = fmt.Errorf("UrlsRepo - Rewrite - r.Pool.QueryRow.Scan: %w", err)
-
 		return
 	}
 
@@ -126,41 +136,49 @@ func (r *UrlsRepo) Rewrite(ctx context.Context, url string) (id int, err error) 
 }
 
 // Create -.
-func (r *UrlsRepo) Create(ctx context.Context, url string) (id int, err error) {
-	err = r.Pool.QueryRow(
+func (r *UrlsRepo) Create(ctx context.Context, url string, ttl time.Duration) (int, error) {
+	transaction, err := r.Pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return 0, fmt.Errorf("UrlsRepo - Create - r.Pool.BeginTx: %w", err)
+	}
+	defer transaction.Rollback(ctx)
+
+	var id int
+	now := time.Now().UTC()
+
+	err = transaction.QueryRow(
 		ctx,
-		`INSERT INTO urls (original,touched) VALUES($1, $2) RETURNING id;`,
-		url, time.Now(),
+		`INSERT INTO urls (original, live_till, activated)
+             VALUES($1, $2, $3)
+             RETURNING id;`,
+		url,
+		now.Add(ttl),
+		now,
 	).Scan(&id)
 	if err != nil {
-		err = fmt.Errorf("UrlsRepo - Create - r.Pool.QueryRow.Scan: %w", err)
-		return
+		return 0, fmt.Errorf("UrlsRepo - Create - transaction.QueryRow: %w", err)
 	}
 
-	err = r.updCount(ctx)
-	if err != nil {
-		err = fmt.Errorf("UrlsRepo - Create - %w", err)
-		return
-	}
-
-	return
-}
-
-func (r *UrlsRepo) updCount(ctx context.Context) (err error) {
-	pg, err := r.Pool.Exec(
+	pg, err := transaction.Exec(
 		ctx,
-		`UPDATE count SET value = value + 1 WHERE id = true;`,
+		`UPDATE last
+             SET value = $1
+             WHERE id = true;`,
+		id,
 	)
 	if err != nil {
-		err = fmt.Errorf("updCount - r.Pool.Exec: %w", err)
-		return
+		return 0, fmt.Errorf("UrlsRepo - Create - transaction.Exec: %w", err)
 	}
 
 	if pg.RowsAffected() <= 0 {
-		err = fmt.Errorf("updCount - pg.RowsAffected: %s",
+		return 0, fmt.Errorf("UrlsRepo - Create - pg.RowsAffected: %s",
 			"rows not affected by sql execution")
-		return
 	}
 
-	return
+	err = transaction.Commit(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("UrlsRepo - Create - transaction.Commit: %w", err)
+	}
+
+	return id, nil
 }
