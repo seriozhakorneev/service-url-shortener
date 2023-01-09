@@ -27,7 +27,7 @@ digitiser:
 
   # short url identifier config
   base: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
-  length: 5
+  max_length: 5
 
 url:
   blank: 'http://127.0.0.1:8080/'

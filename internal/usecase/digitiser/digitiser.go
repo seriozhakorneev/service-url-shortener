@@ -12,7 +12,7 @@ type Digitiser struct {
 	maxInt, strLen int
 }
 
-func New(digits string, length, maxRepoInt int) (Digitiser, error) {
+func New(digits string, maxLength, maxRepoInt int) (Digitiser, error) {
 	if len(digits) < 1 {
 		return Digitiser{}, fmt.Errorf(
 			"impossible configuration: digits len(%d) less than 1",
@@ -23,20 +23,20 @@ func New(digits string, length, maxRepoInt int) (Digitiser, error) {
 	d := Digitiser{
 		digBase: len(digits),
 		digits:  digits,
-		strLen:  length,
+		strLen:  maxLength,
 	}
 
 	if err := d.makeLookup(); err != nil {
 		return Digitiser{}, fmt.Errorf("make lookup failed: %w", err)
 	}
 
-	_ = d.countMax(length)
+	_ = d.countMax(maxLength)
 
 	if d.maxInt > maxRepoInt {
 		return Digitiser{}, fmt.Errorf(
 			"impossible configuration: "+
 				"maximum digit(%d) exceeds maximum repository integer(%d), "+
-				"should shorten length or base",
+				"should shorten maxLength or base",
 			d.maxInt,
 			maxRepoInt,
 		)

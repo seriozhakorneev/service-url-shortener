@@ -39,6 +39,22 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func BenchmarkName(b *testing.B) {
+
+	//for i := 1; i <= length; i++ {
+
+	d, err := New(digits, 6, postgresMaxInt)
+	if err != nil {
+		log.Fatal("new digitiser failed in testing:", err)
+	}
+
+	fmt.Println(d)
+
+	//for i := 0; i < b.N; i++ {
+	//	fmt.Println(i)
+	//}
+}
+
 func FuzzDigitiserNew(f *testing.F) {
 	f.Add(digits)
 	f.Fuzz(func(t *testing.T, fuzzDigits string) {
@@ -117,7 +133,7 @@ func TestDigitiserNew(t *testing.T) {
 	expectedErr = fmt.Errorf(
 		"impossible configuration: "+
 			"maximum digit(%d) exceeds maximum repository integer(%d), "+
-			"should shorten length or base",
+			"should shorten maxLength or base",
 		max,
 		maxRepo,
 	)
