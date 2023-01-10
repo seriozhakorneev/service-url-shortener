@@ -56,6 +56,10 @@ test: ### run test
 	go test -v -cover -race ./internal/...
 .PHONY: test
 
+bench: ### run test
+	go test -bench=. ./internal/...
+.PHONY: bench
+
 integration-test: ### run integration-test
 	go clean -testcache && go test -v ./integration-test/...
 .PHONY: integration-test
