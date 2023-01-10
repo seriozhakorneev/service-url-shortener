@@ -45,7 +45,7 @@ func Run(cfg *config.Config) {
 	// Use Case
 	d, err := digitiser.New(
 		cfg.Digitiser.Base,
-		cfg.Digitiser.Length,
+		cfg.Digitiser.MaxLength,
 		cfg.Digitiser.MaxCount,
 	)
 	if err != nil {
