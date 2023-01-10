@@ -11,48 +11,44 @@ import (
 
 const (
 	// changing this parameters will affect tests performance
-	length         = 5
-	postgresMaxInt = 2147483647
-	digits         = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+	length           = 5
+	repositoryMaxInt = 2147483647
+	maxInt           = repositoryMaxInt * 35
+	digits           = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 )
 
 var (
-	base, max int
+	tDigitiser Digitiser
+	base, max  int
+
+	// benchmark
+	bTestIDs    [10]int
+	bTestShorts [10]string
 )
 
 func TestMain(m *testing.M) {
-	d := Digitiser{digits: digits, strLen: length, digBase: len(digits)}
+	tDigitiser = Digitiser{digits: digits, strLen: length, digBase: len(digits)}
 
-	err := d.makeLookup()
+	err := tDigitiser.makeLookup()
 	if err != nil {
 		log.Fatalf("Failed to make lookup in test: %s", err)
 	}
 
-	err = d.countMax(length)
+	err = tDigitiser.countMax(length)
 	if err != nil {
 		log.Fatalf("Failed to count Max in test: %s", err)
 	}
 
-	base, max = d.base(), d.Max()
+	base, max = tDigitiser.base(), tDigitiser.Max()
+
+	bTestIDs = genBTestIDs(max)
+	bTestShorts = [10]string{
+		"_____", "VoVKa", "Ryba", "Yaaaz", "SeN_X",
+		"anyOf", "Belta", "NotMe", "ASFDG", "tarif",
+	}
 
 	code := m.Run()
 	os.Exit(code)
-}
-
-func BenchmarkName(b *testing.B) {
-
-	//for i := 1; i <= length; i++ {
-
-	d, err := New(digits, 6, postgresMaxInt)
-	if err != nil {
-		log.Fatal("new digitiser failed in testing:", err)
-	}
-
-	fmt.Println(d)
-
-	//for i := 0; i < b.N; i++ {
-	//	fmt.Println(i)
-	//}
 }
 
 func FuzzDigitiserNew(f *testing.F) {
@@ -70,10 +66,11 @@ func FuzzDigitiserNew(f *testing.F) {
 			return
 		}
 
-		result, err := New(fuzzDigits, length, postgresMaxInt)
+		result, err := New(fuzzDigits, length, maxInt)
 		if err != nil {
 			return
 		}
+
 		expected.maxInt = result.Max()
 		if !reflect.DeepEqual(expected, result) {
 			t.Fatalf("expected result: %v, got: %v", expected, result)
@@ -106,7 +103,7 @@ func TestDigitiserNew(t *testing.T) {
 		t.Fatal("make lookup failed in testing:", err)
 	}
 
-	result, err := New(digits, length, postgresMaxInt)
+	result, err := New(digits, length, maxInt)
 	if err != nil {
 		t.Fatal("unexpected failed new in testing:", err)
 	}
@@ -120,7 +117,7 @@ func TestDigitiserNew(t *testing.T) {
 	expectedErr := fmt.Errorf("make lookup failed: %w",
 		fmt.Errorf("duplicate rune: %d", duplicateDigits[0]))
 
-	result, err = New(duplicateDigits, 0, postgresMaxInt)
+	result, err = New(duplicateDigits, 0, maxInt)
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected err: %v, got: %v", expectedErr, err)
 	}
@@ -133,7 +130,7 @@ func TestDigitiserNew(t *testing.T) {
 	expectedErr = fmt.Errorf(
 		"impossible configuration: "+
 			"maximum digit(%d) exceeds maximum repository integer(%d), "+
-			"should shorten maxLength or base",
+			"should shorten max_length or base",
 		max,
 		maxRepo,
 	)
@@ -199,7 +196,7 @@ func FuzzDigitiserDigit(f *testing.F) {
 	f.Add("abcd")
 	f.Fuzz(func(t *testing.T, short string) {
 		t.Parallel()
-		digitiser, err := New(digits, length, postgresMaxInt)
+		digitiser, err := New(digits, length, maxInt)
 		if err != nil {
 			return
 		}
@@ -217,7 +214,7 @@ func FuzzDigitiserDigit(f *testing.F) {
 func TestDigitiserDigitErrors(t *testing.T) {
 	t.Parallel()
 
-	d, err := New(digits, length, postgresMaxInt)
+	d, err := New(digits, length, maxInt)
 	if err != nil {
 		t.Fatal("new digitiser failed in testing:", err)
 	}
@@ -261,7 +258,7 @@ func FuzzDigitiserString(f *testing.F) {
 	f.Add(224)
 	f.Fuzz(func(t *testing.T, id int) {
 		t.Parallel()
-		digitiser, err := New(digits, length, postgresMaxInt)
+		digitiser, err := New(digits, length, maxInt)
 		if err != nil {
 			return
 		}
@@ -284,7 +281,7 @@ func FuzzDigitiserString(f *testing.F) {
 func TestDigitiserString(t *testing.T) {
 	t.Parallel()
 
-	d, err := New(digits, length, postgresMaxInt)
+	d, err := New(digits, length, maxInt)
 	if err != nil {
 		t.Fatal("new digitiser failed in testing:", err)
 	}
@@ -315,7 +312,7 @@ func TestDigitiser_Results(t *testing.T) {
 	)
 
 	for i := 1; i <= length; i++ {
-		d, err = New(digits, i, postgresMaxInt)
+		d, err = New(digits, i, maxInt)
 		if err != nil {
 			t.Fatal("new digitiser failed in testing:", err)
 		}
@@ -353,4 +350,55 @@ func testID(d *Digitiser, expected int) error {
 	}
 
 	return nil
+}
+
+func BenchmarkDigitiserNew(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := New(digits, length, max)
+		if err != nil {
+			b.Fatal("new digitiser failed in testing:", err)
+		}
+	}
+}
+
+func BenchmarkDigitiserString(b *testing.B) {
+	for _, id := range bTestIDs {
+		b.Run(fmt.Sprintf("input %d", id), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_, err := tDigitiser.String(id)
+				if err != nil {
+					b.Fatalf("tDigitiser.String failed in"+
+						" benchmark with input: %d\nerr: %s",
+						id, err)
+				}
+			}
+		})
+	}
+}
+
+func BenchmarkDigitiserDigit(b *testing.B) {
+	for _, short := range bTestShorts {
+		b.Run(fmt.Sprintf("input %s", short), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_, err := tDigitiser.Digit(short)
+				if err != nil {
+					b.Fatalf("tDigitiser.Digit failed in"+
+						" benchmark with input: %s\nerr: %s",
+						short, err)
+				}
+			}
+		})
+	}
+}
+
+func genBTestIDs(max int) (a [10]int) {
+	n := max / 10 * 1
+	for i := range a {
+		if i > 0 {
+			a[i] = a[i-1] - n
+		} else {
+			a[i] = max
+		}
+	}
+	return
 }

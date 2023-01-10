@@ -36,7 +36,7 @@ func New(digits string, maxLength, maxRepoInt int) (Digitiser, error) {
 		return Digitiser{}, fmt.Errorf(
 			"impossible configuration: "+
 				"maximum digit(%d) exceeds maximum repository integer(%d), "+
-				"should shorten maxLength or base",
+				"should shorten max_length or base",
 			d.maxInt,
 			maxRepoInt,
 		)
