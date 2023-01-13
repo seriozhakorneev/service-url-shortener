@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -28,13 +29,13 @@ func (r *redirectRoutes) get(c *gin.Context) {
 		switch {
 		// caching error - just prints log with error, no error response
 		case errors.Is(err, service.ErrCaching):
-			r.l.Warn(err.Error(), "http - v1 - get")
+			r.l.Warn(fmt.Sprintf("http - v1 - get: %s", err))
 		case errors.Is(err, service.ErrImpossibleShortURL):
 			errorResponse(c, http.StatusBadRequest, service.ErrImpossibleShortURL.Error())
 		case errors.Is(err, service.ErrNotFoundURL):
 			errorResponse(c, http.StatusNotFound, service.ErrNotFoundURL.Error())
 		default:
-			r.l.Error(err, "http - v1 - get")
+			r.l.Error(fmt.Errorf("http - v1 - get: %w", err))
 			errorResponse(c, http.StatusInternalServerError, "shortener service problems")
 		}
 	}

@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -45,9 +46,9 @@ func (s *shortenerRoutes) Create(
 	short, err := s.t.Shorten(ctx, request.URL, ttl)
 	// caching error - just prints log with error, no error response
 	if errors.Is(err, service.ErrCaching) {
-		s.l.Warn(err.Error(), "grpc - Shortener - Create")
+		s.l.Warn(fmt.Sprintf("grpc - Shortener - Create: %s", err))
 	} else if err != nil {
-		s.l.Error(err, "grpc - Shortener - Create")
+		s.l.Error(fmt.Errorf("grpc - Shortener - Create: %w", err))
 		return nil, status.Error(codes.Internal, "shortener service problems")
 	}
 
@@ -69,13 +70,13 @@ func (s *shortenerRoutes) Get(
 		switch {
 		// caching error - just prints log with error, no error response
 		case errors.Is(err, service.ErrCaching):
-			s.l.Warn(err.Error(), "grpc - Shortener - Get")
+			s.l.Warn(fmt.Sprintf("grpc - Shortener - Get: %s", err))
 		case errors.Is(err, service.ErrImpossibleShortURL):
 			return nil, status.Error(codes.InvalidArgument, service.ErrImpossibleShortURL.Error())
 		case errors.Is(err, service.ErrNotFoundURL):
 			return nil, status.Error(codes.NotFound, service.ErrNotFoundURL.Error())
 		default:
-			s.l.Error(err, "grpc - Shortener - Get")
+			s.l.Error(fmt.Errorf("grpc - Shortener - Get: %w", err))
 			return nil, status.Error(codes.Internal, "shortener service problems")
 		}
 	}
